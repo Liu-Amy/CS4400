@@ -55,7 +55,7 @@ class gtTrains:
         ## buttons
         register = Button(self.loginframe, text = "Register", command = self.goToRegister)
         register.grid(row = 0, column = 0, sticky = E, ipadx = 10)
-        login = Button(self.loginframe, text = "Login")#, command = self.loginCheck)
+        login = Button(self.loginframe, text = "Login", command = self.loginCheck)
         login.grid(row = 0, column = 1, sticky = E, ipadx = 10)
         
     def connect(self):
@@ -235,7 +235,7 @@ class gtTrains:
         searchbutton = Button(self.viewSchedWin, text = "Search", command = self.searchSchedule)
         searchbutton.grid(row = 2, column = 0, columnspan = 2, pady = 10)
 
-    def searchSchedule(self)
+    def searchSchedule(self):
         self.viewSchedWin2 = Toplevel()
         self.viewSchedWin2.title("View Train Schedule")
         viewLabel = Label(self.viewSchedWin2, text = "View Train Schedule", font="Arial 20", pady = 20, padx = 30)
@@ -272,7 +272,7 @@ class gtTrains:
                 arrival.grid(row = i+1, column = 1, sticky=W+E+N+S)
                 departure = Label(z, text = trainSchedList[i][1], width = 15)
                 departure.grid(row = i+1, column = 2, sticky=W+E+N+S)
-                stationName = Label(z, text = text = trainSchedList[i][2], width = 15)
+                stationName = Label(z, text = trainSchedList[i][2], width = 15)
                 stationName.grid(row = i+1, column = 3, sticky=W+E+N+S)
             trainNo = Label(z, text = self.trainString)
             trainNo.grid(row = 1, column = 0)
@@ -280,7 +280,7 @@ class gtTrains:
             
     
     def trainSearch(self):
-        self.
+        pass
     def makeReservation(self):
         pass
     def updateReservation(self):
