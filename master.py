@@ -21,7 +21,8 @@ class gtTrains:
         ##delete later
         self.loginWin.withdraw()
         #self.homePage()
-        self.addSchoolInfo()
+        #self.addSchoolInfo()
+        self.viewSchedule()
 
     def loginPage(self, rootWin):
         # window setup
@@ -56,7 +57,16 @@ class gtTrains:
         register.grid(row = 0, column = 0, sticky = E, ipadx = 10)
         login = Button(self.loginframe, text = "Login")#, command = self.loginCheck)
         login.grid(row = 0, column = 1, sticky = E, ipadx = 10)
-
+        
+    def connect(self):
+        ## connect to database
+        try:
+            self.db = pymysql.connect(host = "academic-mysql.cc.gatech.edu",
+                                 passwd = 'zMRDk9FA', user = 'cs4400_Team_29', db = 'cs4400_Team_29')
+            return self.db
+        except:
+            messagebox.showerror("Error", "Check your internet connection")
+            
     def loginCheck(self):
         ## connect to database
         self.connect()
@@ -165,27 +175,16 @@ class gtTrains:
             ##
             ##
             ##
-            ##
-            ##
-            ##
-            ##
             ## need to insert things into users AND customers
-            ##sql = "INSERT INTO GTBrokerageUsers (Fullname, Username, Password, Balance) VALUES (%s, %s, %s, %s)"
-            ##insert = cursor.execute(sql,(nameStr, userStr, passStr, 100000.00))
+            ## sql = "INSERT INTO GTBrokerageUsers (Fullname, Username, Password, Balance) VALUES (%s, %s, %s, %s)"
+            ## insert = cursor.execute(sql,(nameStr, userStr, passStr, 100000.00))
             ## closing stuff after a successful registration
             cursor.close()
             self.connect().commit()
             messagebox.showinfo("Registration", "Registration successful!")
             self.backToLogin()
             
-    def connect(self):
-        ## connect to database
-        try:
-            self.db = pymysql.connect(host = "academic-mysql.cc.gatech.edu",
-                                 passwd = 'zMRDk9FA', user = 'cs4400_Team_29', db = 'cs4400_Team_29')
-            return self.db
-        except:
-            messagebox.showerror("Error", "Check your internet connection")
+    
 
     def homePage(self):
         ## window set up
@@ -222,7 +221,66 @@ class gtTrains:
         self.date = currentTime.strftime("%Y/%m/%d")
         
     def viewSchedule(self):
-        pass
+        self.viewSchedWin = Toplevel()
+        self.viewSchedWin.title("View Train Schedule")
+        viewLabel = Label(self.viewSchedWin, text = "View Train Schedule", font="Arial 20", pady = 20, padx = 30)
+        viewLabel.grid(row = 0, column = 0, columnspan = 2)
+        trainLabel = Label(self.viewSchedWin, text = "Train Number", padx = 20, pady = 15)
+        trainLabel.grid(row = 1, column = 0)
+        self.trainStr = StringVar()
+        self.trainStr.set("")
+        trainEntry = Entry(self.viewSchedWin, textvariable = self.trainStr, width = 30)
+        trainEntry.grid(row = 1, column = 1, padx = 5)
+        
+        searchbutton = Button(self.viewSchedWin, text = "Search", command = self.searchSchedule)
+        searchbutton.grid(row = 2, column = 0, columnspan = 2, pady = 10)
+
+    def searchSchedule(self)
+        self.viewSchedWin2 = Toplevel()
+        self.viewSchedWin2.title("View Train Schedule")
+        viewLabel = Label(self.viewSchedWin2, text = "View Train Schedule", font="Arial 20", pady = 20, padx = 30)
+        viewLabel.grid(row = 0, column = 0, columnspan = 2)
+        self.trainString = self.trainStr.get()
+        ## connecting to database
+        self.connect()
+        cursor = self.connect().cursor()
+        sql = "SELECT ArrivalTime, DepartureTime, StationName FROM Stops WHERE TrainNumber = %s"
+        check = cursor.execute(sql, self.trainString)
+        if check == 0:
+            messagebox.showerror("Error", "Train Number Invalid")
+        else:
+            ##creating table
+            z = Frame(self.viewSchedWin2, bd = 1, relief = "raised")
+            z.grid(row = 1, column = 0, columnspan = 2)
+            ## top labels
+            train = Label(z, text = "Train")
+            train.grid(row = 0, column = 0)
+            arrivalTime = Label(z, text = "Arrival Time")
+            arrivalTime.grid(row = 0, column = 1)
+            departTime = Label(z, text = "Departure Time")
+            departTime.grid(row = 0, column = 2)
+            station = Label(z, text = "Station")
+            station.grid(row = 0, column = 3)
+            ## getting data
+            trainSchedList = []
+            cursor.execute(sql, self.trainString)
+            for record in cursor:
+                trainSchedList.append(record)
+            schedLen = len(trainSchedList)
+            for i in range(schedLen):
+                arrival = Label(z, text = trainSchedList[i][0], width = 15)
+                arrival.grid(row = i+1, column = 1, sticky=W+E+N+S)
+                departure = Label(z, text = trainSchedList[i][1], width = 15)
+                departure.grid(row = i+1, column = 2, sticky=W+E+N+S)
+                stationName = Label(z, text = text = trainSchedList[i][2], width = 15)
+                stationName.grid(row = i+1, column = 3, sticky=W+E+N+S)
+            trainNo = Label(z, text = self.trainString)
+            trainNo.grid(row = 1, column = 0)
+            cursor.close()
+            
+    
+    def trainSearch(self):
+        self.
     def makeReservation(self):
         pass
     def updateReservation(self):
@@ -231,26 +289,39 @@ class gtTrains:
         pass
     def giveReview(self):
         pass
+    
     def addSchoolInfo(self):
-        #self.homewin.withdraw()
+        self.homewin.withdraw()
         self.addSchoolWin = Toplevel()
         self.addSchoolWin.title("Add School Info")
         addLabel = Label(self.addSchoolWin, text = "Add School Info", font = "Arial 20", pady = 20, padx = 30)
-        addLabel.grid(row = 0, column = 0)
+        addLabel.grid(row = 0, column = 0, columnspan=2)
         emailLabel = Label(self.addSchoolWin, text = "School Email Address:")
-        emailLabel.grid(row = 1, column = 0)
+        emailLabel.grid(row = 1, column = 0, sticky = E, padx = 10)
         emailStr = StringVar()
         emailStr.set("")
         emailEntry = Entry(self.addSchoolWin, textvariable = emailStr, width = 30)
-        emailEntry.grid(row = 1, column = 1)
+        emailEntry.grid(row = 1, column = 1, padx = 10)
         noteLabel = Label(self.addSchoolWin, text = "Your school email address ends with .edu")
-        noteLabel.grid(row = 2, column = 0, columnspan = 2)
+        noteLabel.grid(row = 2, column = 0, columnspan = 2, pady = 10)
         ## buttons
-        back = Button(self.addSchoolWin, text = "Back")
-        back.grid(row = 3, column = 0)
-        submit = Button(self.addSchoolWin, text = "Submit")
-        submit.grid(row = 3, column = 1)
+        buttonframe = Frame(self.addSchoolWin)
+        buttonframe.grid(row = 3, column = 0, columnspan = 2)
+        back = Button(buttonframe, text = "Back",command=self.schoolInfoBack)
+        back.grid(row = 0, column = 0, sticky = E, ipadx = 10)
+        submit = Button(buttonframe, text = "Submit", command=self.submitSchoolInfo)
+        submit.grid(row = 0, column = 1, sticky = W, ipadx = 5)
         
+    def schoolInfoBack(self):
+        self.addSchoolWin.withdraw()
+        self.homeWin.deiconify()
+        
+    def submitSchoolInfo(self):
+        pass
+    ## checking if valid school address
+    ## if so, set student to yes
+    ## create a discount
+    
     def logOut(self):
         pass
 rootWin = Tk()
