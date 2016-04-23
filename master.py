@@ -22,8 +22,11 @@ class gtTrains:
         self.loginWin.withdraw()
         #self.homePage()
         #self.addSchoolInfo()
-        self.viewSchedule()
-
+        #self.viewSchedule()
+        #self.trainSearch()
+        #self.passengerInfo()
+        #self.makeReservation()
+        self.pay()
     def loginPage(self, rootWin):
         # window setup
         self.loginWin = rootWin
@@ -185,7 +188,6 @@ class gtTrains:
             self.backToLogin()
             
     
-
     def homePage(self):
         ## window set up
         self.homeWin = Toplevel()
@@ -236,12 +238,11 @@ class gtTrains:
         searchbutton.grid(row = 2, column = 0, columnspan = 2, pady = 10)
 
     def searchSchedule(self):
-        self.viewSchedWin2 = Toplevel()
-        self.viewSchedWin2.title("View Train Schedule")
-        viewLabel = Label(self.viewSchedWin2, text = "View Train Schedule", font="Arial 20", pady = 20, padx = 30)
-        viewLabel.grid(row = 0, column = 0, columnspan = 2)
-        self.trainString = self.trainStr.get()
+        ## things to fix:
+        ## sort the times in order
+        ## use the train name from table instead of user inputted string
         ## connecting to database
+        self.trainString = self.trainStr.get()
         self.connect()
         cursor = self.connect().cursor()
         sql = "SELECT ArrivalTime, DepartureTime, StationName FROM Stops WHERE TrainNumber = %s"
@@ -249,23 +250,26 @@ class gtTrains:
         if check == 0:
             messagebox.showerror("Error", "Train Number Invalid")
         else:
+            self.viewSchedWin.withdraw()
+            self.viewSchedWin2 = Toplevel()
+            self.viewSchedWin2.title("View Train Schedule")
+            viewLabel = Label(self.viewSchedWin2, text = "View Train Schedule", font="Arial 20", pady = 20, padx = 30)
+            viewLabel.grid(row = 0, column = 0, columnspan = 2)
             ##creating table
             z = Frame(self.viewSchedWin2, bd = 1, relief = "raised")
             z.grid(row = 1, column = 0, columnspan = 2)
             ## top labels
-            train = Label(z, text = "Train")
-            train.grid(row = 0, column = 0)
-            arrivalTime = Label(z, text = "Arrival Time")
-            arrivalTime.grid(row = 0, column = 1)
-            departTime = Label(z, text = "Departure Time")
-            departTime.grid(row = 0, column = 2)
-            station = Label(z, text = "Station")
-            station.grid(row = 0, column = 3)
+            labelList = ["Train", "Arrival Time", "Departure Time", "Station"]
+            for i in range(len(labelList)):
+                header = Label(z, text = labelList[i])
+                header.grid(row = 0, column = i)
             ## getting data
             trainSchedList = []
             cursor.execute(sql, self.trainString)
             for record in cursor:
                 trainSchedList.append(record)
+           # trainSchedList.sort(key = lambda r: datetime.datetime.time(r[0], "%h-%m-%s"))
+            print(trainSchedList)
             schedLen = len(trainSchedList)
             for i in range(schedLen):
                 arrival = Label(z, text = trainSchedList[i][0], width = 15)
@@ -277,11 +281,215 @@ class gtTrains:
             trainNo = Label(z, text = self.trainString)
             trainNo.grid(row = 1, column = 0)
             cursor.close()
-            
-    
+            back = Button(self.viewSchedWin2, text = "Back", padx = 6, command = self.backtoViewTrain)
+            back.grid(row = 2, column = 0, pady=10)
+
+    def backtoViewTrain(self):
+        self.viewSchedWin2.withdraw()
+        self.viewSchedWin.deiconify()
+        
     def trainSearch(self):
-        pass
+        #self.homePage.withdraw()
+        self.connect()
+        cursor = self.connect().cursor()
+        sql = "SELECT CONCAT(StationName,' (', Location, ')'), StationName FROM Stations"
+        cursor.execute(sql)
+        self.stationDict={}
+        for record in cursor:
+            self.stationDict[record[0]] = record[1]
+        cursor.close()
+        stationList = list(self.stationDict.keys())
+        self.trainSearchWin = Toplevel()
+        self.trainSearchWin.title("Search Train")
+        title = Label(self.trainSearchWin, text = "Search Train", font = "Arial 20")
+        title.grid(row=0, column=0)
+        mframe = Frame(self.trainSearchWin)
+        mframe.grid(row=1,column=0)
+        dlabel = Label(mframe, text = "Departs From")
+        dlabel.grid(row=0, column=0)
+        self.departVar = StringVar(mframe)
+        self.departVar.set(stationList[0])
+        self.arriveVar = StringVar(mframe)
+        self.arriveVar.set(stationList[1])
+        doption = OptionMenu(mframe, self.departVar, *stationList)
+        doption.grid(row=0, column=1)
+        alabel = Label(mframe, text = "Arrives At")
+        alabel.grid(row=1,column=0)
+        aoption = OptionMenu(mframe, self.arriveVar, *stationList)
+        aoption.grid(row=1,column=1)
+        ddlabel = Label(mframe, text = "Departure Date")
+        ddlabel.grid(row=2, column=0)
+        ## insert date selector here :((
+        ##
+        ##
+        ##
+        findtrain = Button(self.trainSearchWin, text = "Find Trains", command=self.selectDepart)
+        findtrain.grid(row=2, column=0, pady = 5)
+        
+    def selectDepart(self):
+        self.trainSearchWin.withdraw()
+        self.connect()
+        cursor = self.connect().cursor()
+        ## tell amy to fix SQL
+        sql = "SELECT TrainRoutes.TrainNumber, CONCAT(DepartureStop.DepartureTime,' - ', ArrivalStop.ArrivalTime, '\n', TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime)), DepartureStop.DepartureTime, ArrivalStop.ArrivalTime, TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) as Duration, TrainRoutes.FirstClassPrice, TrainRoutes.SecondClassPrice FROM TrainRoutes INNER JOIN Stops as ArrivalStop ON TrainRoutes.TrainNumber = ArrivalStop.TrainNumber INNER JOIN Stops as DepartureStop ON TrainRoutes.TrainNumber = DepartureStop.TrainNumber WHERE DepartureStop.StationName = %s AND ArrivalStop.StationName = %s AND TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) > '00:00:00'"
+        depart = self.stationDict[self.departVar.get()]
+        arrive = self.stationDict[self.arriveVar.get()]
+        selectDepartList = []
+        check = cursor.execute(sql, (depart,arrive))
+        if check == 0:
+            messagebox.showerror("Error", "No routes available")
+            self.trainSearchWin.deiconify()
+        else:
+            self.selectDepartWin = Toplevel()
+            self.selectDepartWin.title("Select Departure")
+            title = Label(self.selectDepartWin, text="Select Departure", font="Arial 20")
+            title.grid(row=0,column=0)
+            table = Frame(self.selectDepartWin)
+            table.grid(row=1,column=0)
+            labelList = ["Train \n (Train Number)", "Time \n (Duration)", "1st Class Price", "2nd Class Price"]
+            for i in range(len(labelList)):
+                header = Label(table, text = labelList[i])
+                header.grid(row = 0, column = i)
+            cursor.execute(sql, (depart,arrive))
+            for record in cursor:
+                selectDepartList.append([record[0], record[1].decode("utf-8"), record[5], record[6]])
+            print(selectDepartList)
+            #print(type(selectDepartList[0][1]))
+            cursor.close()
+            for i in range(len(selectDepartList)):
+                train = Label(table, text = selectDepartList[i][0])
+                train.grid(row=i+1, column = 0)
+                time = Label(table, text = selectDepartList[i][1])
+                time.grid(row=i+1, column = 1)
+
+                ##finish this fucking function
+
+
+                
+                #first = Label(table, text = selectDepartList[i][2])
+                #first.grid(row=i+1, column = 2)
+                #second = Label(table, text = selectDepartList[i][3])
+                #second.grid(row=i+1, column = 3)
+            MODES = [("a", "1"), ("B", "2"), ("C", "3")]
+            v = StringVar()
+            v.set("1")
+            for i in range(len(MODES)):
+                b = Radiobutton(self.selectDepartWin, text=MODES[i][0], variable=v, value=MODES[i][1])
+                b.grid(row=i+2, column=0)
+                
+    def passengerInfo(self):
+        #self.selectDepart.withdraw()
+        self.passengerInfoWin = Toplevel()
+        self.passengerInfoWin.title("Travel Extras & Passenger Info")
+        title = Label(self.passengerInfoWin, text = "Travel Extras & Passenger Info", font="Arial 20")
+        title.grid(row = 0, column=0, columnspan=2, padx = 30, pady=20)
+        mframe = Frame(self.passengerInfoWin)
+        mframe.grid(row=1, column=0, columnspan=2)
+        labelB = Label(mframe, text="Number of Baggage")
+        labelB.grid(row = 0, column = 0)
+        self.baggage = Spinbox(mframe, from_=0, to=4)
+        self.baggage.grid(row = 0, column = 1)
+        #number is self.baggage.get()
+        labelD = Label(mframe, text="Every passenger can bring up to 4 baggage. 2 free of charge, 2 for $30 per bag", font="Arial 8")
+        labelD.grid(row=1, column=0, columnspan=2)
+        labelP = Label(mframe, text = "Passenger Name")
+        labelP.grid(row=2, column=0)
+        self.passenger = StringVar()
+        self.passenger.set("")
+        entryP = Entry(mframe, textvariable = self.passenger)
+        entryP.grid(row = 2, column=1)
+        back = Button(self.passengerInfoWin, text = "Back", command=self.backSelectDep)
+        back.grid(row=2, column=0, pady = 15)
+        nextb = Button(self.passengerInfoWin, text = "Next", command=self.makeReservation)
+        nextb.grid(row=2, column=1, pady=15)
+        
+    def backSelectDep(self):
+        self.passengerInfoWin.withdraw()
+        self.selectDepartWin.deiconify()
+        
     def makeReservation(self):
+        #self.passengerInfo.withdraw()
+        self.makeResWin = Toplevel()
+        self.makeResWin.title("Make Reservation")
+        title = Label(self.makeResWin, text = "Make Reservation", font="Arial 20")
+        title.grid(row=0, column=0, columnspan=200, pady = 20)
+        currentselect = Label(self.makeResWin, text = "Currently Selected")
+        currentselect.grid(row=1, column=0, padx=20)
+        table = Frame(self.makeResWin)
+        table.grid(row=2, column=0, columnspan=200, pady=20, padx=20)
+        hList = ["Train\n(Train Number)", "Time\n(Duration)", "Departs From", "Arrives At", "Class", "Price", "# of Baggage(s)", "Passenger Name", "Remove"]
+        for i in range(len(hList)):
+            header = Label(table, text = hList[i])
+            header.grid(row = 0, column = i)
+        #if she or he is a student:
+        #sda = Label(self.makeResWin, text = "Student Discount Applied")
+        #sda.grid(row=3, column=0)
+        tc = Label(self.makeResWin, text="Total Cost")
+        tc.grid(row=4, column=0)
+        ## mark entry as closed, import the total cost
+        tcE = Entry(self.makeResWin)
+        tcE.grid(row=4, column=1)
+        uc = Label(self.makeResWin, text="Use Card")
+        uc.grid(row=5, column=0)
+        #options list of different cards in the system
+        #ucOM = OptionMenu(self.makeResWin, var, *#nameofoptionslist
+        #ucOM.grid(row=5, column=1)
+        #ucLabel = Label(self.makeResWin, text="Add Card", command=self.pay)
+        #ucLabel.grid(row=5, column=2)
+        #cat = link or button to continue adding a train command=self.addTrain)
+        #cat.grid(row=6,column=0)
+        back = Button(self.makeResWin, text="Back", command=self.backPassInfo)
+        back.grid(row=7, column=0, columnspan=70, pady=20)
+        submit = Button(self.makeResWin, text="Submit", command=self.submitRes)
+        submit.grid(row=7, column=80, columnspan=100, pady=20)
+    def addTrain(self):
+        pass
+    def pay(self):
+        #self.makeReservation.withdraw()
+        self.payWin=Toplevel()
+        self.payWin.title("Payment Information")
+        title=Label(self.payWin, text="Payment Information", font="Arial 20")
+        title.grid(row=0, column=0, columnspan=2)
+        aFrame=Frame(self.payWin)
+        aFrame.grid(row=1, column=0)
+        ac = Label(aFrame, text="Add Card", font="Arial 14", width=30)
+        ac.grid(row=0, column=0, columnspan=2)
+        acList = ["Name on Card", "Card Number", "CVV", "Expiration Date"]
+        for i in range(len(acList)):
+            header = Label(aFrame, text = acList[i])
+            header.grid(row = i+1, column = 0)
+        self.nameOnCard = StringVar()
+        self.nameOnCard.set("")
+        self.cardNo = StringVar()
+        self.cardNo.set("")
+        self.cvv = StringVar()
+        self.cvv.set("")
+        nocEntry = Entry(aFrame, textvariable=self.nameOnCard)
+        nocEntry.grid(row = 1, column=1)
+        cNoEntry = Entry(aFrame, textvariable=self.cardNo)
+        cNoEntry.grid(row = 2, column=1)
+        cvvEntry = Entry(aFrame, textvariable=self.cvv)
+        cvvEntry.grid(row = 3, column=1)
+        addSub = Button(aFrame, text="Submit", command=self.addCard)
+        addSub.grid(row=5, column=0, columnspan=2)
+        dc = Label(aFrame, text="Delete Card", font="Arial 14", width=30)
+        dc.grid(row=0, column=3, columnspan=2)
+        cn=Label(aFrame, text="Card Number")
+        cn.grid(row=1, column=3)
+        #optionslist
+        #cnMenu = OptionMenu(aFrame, var, *#nameofoptionslist
+        #cnMenu.grid(row=1, column=4)
+        delSub = Button(aFrame, text="Submit", command=self.deleteCard)
+        delSub.grid(row=5, column=3, columnspan=2)
+        
+    def addCard(self):
+        pass
+    def deleteCard(self):
+        pass
+    def backPassInfo(self):
+        self.makeResWin.withdraw()
+        self.passengerInfoWin.deiconify()
+    def submitRes(self):
         pass
     def updateReservation(self):
         pass
