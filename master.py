@@ -19,14 +19,15 @@ class gtTrains:
         self.registerPage()
         self.registerWin.withdraw()
         ##delete later
-        self.loginWin.withdraw()
+        #self.loginWin.withdraw()
         #self.homePage()
         #self.addSchoolInfo()
         #self.viewSchedule()
-        #self.trainSearch()
+        self.trainSearch()
         #self.passengerInfo()
         #self.makeReservation()
-        self.pay()
+        #self.pay()
+        
     def loginPage(self, rootWin):
         # window setup
         self.loginWin = rootWin
@@ -83,7 +84,7 @@ class gtTrains:
         ## successful
         if check == 1:
             messagebox.showinfo("Login", "Login Successful!")
-            self.driver()
+            self.homePage()
             self.loginWin.withdraw()
         ## unsuccessful
         else:
@@ -96,7 +97,7 @@ class gtTrains:
     def registerPage(self):
         ## window setup
         self.registerWin = Toplevel()
-        self.registerWin.title("GT Brokers Register Page")
+        self.registerWin.title("GT Trains Register Page")
         ## main frame setup
         self.topRegister = Frame(self.registerWin)
         self.topRegister.grid(row = 0, column = 0, pady = 40)
@@ -137,7 +138,7 @@ class gtTrains:
         ## buttons
         cancel = Button(self.registerbuttons, text = "Cancel")#, command = self.backToLogin)
         cancel.grid(row = 0, column = 0, ipadx = 60)
-        register = Button(self.registerbuttons, text = "Register")#, command = self.registerNew)
+        register = Button(self.registerbuttons, text = "Register", command = self.registerNew)
         register.grid(row = 0, column = 1, ipadx = 60)
 
     def backToLogin(self):
@@ -150,9 +151,6 @@ class gtTrains:
         passStr = self.passStr.get()
         userStr = self.userStr.get()
         confirmStr = self.confirmStr.get()
-        ## finding numbers and capital letters in the password
-        numCheck = re.findall('[0-9]', passStr)
-        capitalCheck = re.findall('[A-Z]', passStr)
         ## connecting to database
         self.connect()
         cursor = self.connect().cursor()
@@ -174,14 +172,11 @@ class gtTrains:
         elif userCheck != 0:
             messagebox.showerror("Error", "Username already in use")
         else:
-            ## inserting new user when there is a fullname
-            ##
-            ##
-            ##
-            ## need to insert things into users AND customers
-            ## sql = "INSERT INTO GTBrokerageUsers (Fullname, Username, Password, Balance) VALUES (%s, %s, %s, %s)"
-            ## insert = cursor.execute(sql,(nameStr, userStr, passStr, 100000.00))
-            ## closing stuff after a successful registration
+            sql = "INSERT INTO Users (Username, Password) VALUES (%s, %s)"
+            insert = cursor.execute(sql,(userStr, passStr))
+            sql2 = "INSERT INTO Customers (Username, Email, Student) VALUES (%s, %s, %s)"
+            insert = cursor.execute(sql2,(userStr, emailStr, 'no'))
+            #closing stuff after a successful registration
             cursor.close()
             self.connect().commit()
             messagebox.showinfo("Registration", "Registration successful!")
@@ -239,13 +234,12 @@ class gtTrains:
 
     def searchSchedule(self):
         ## things to fix:
-        ## sort the times in order
         ## use the train name from table instead of user inputted string
         ## connecting to database
         self.trainString = self.trainStr.get()
         self.connect()
         cursor = self.connect().cursor()
-        sql = "SELECT ArrivalTime, DepartureTime, StationName FROM Stops WHERE TrainNumber = %s"
+        sql = "SELECT ArrivalTime, DepartureTime, StationName FROM Stops WHERE TrainNumber = %s ORDER BY ArrivalTime"
         check = cursor.execute(sql, self.trainString)
         if check == 0:
             messagebox.showerror("Error", "Train Number Invalid")
@@ -265,11 +259,9 @@ class gtTrains:
                 header.grid(row = 0, column = i)
             ## getting data
             trainSchedList = []
-            cursor.execute(sql, self.trainString)
             for record in cursor:
                 trainSchedList.append(record)
-           # trainSchedList.sort(key = lambda r: datetime.datetime.time(r[0], "%h-%m-%s"))
-            print(trainSchedList)
+            #print(trainSchedList)
             schedLen = len(trainSchedList)
             for i in range(schedLen):
                 arrival = Label(z, text = trainSchedList[i][0], width = 15)
@@ -319,10 +311,11 @@ class gtTrains:
         aoption.grid(row=1,column=1)
         ddlabel = Label(mframe, text = "Departure Date")
         ddlabel.grid(row=2, column=0)
-        ## insert date selector here :((
-        ##
-        ##
-        ##
+        currentTime = datetime.datetime.now()
+        self.date2 = StringVar(mframe)
+        self.date2.set(currentTime.strftime("%m/%d/%Y"))
+        dateEntry = Entry(mframe, textvariable = self.date2, width = 37)
+        dateEntry.grid(row=2, column = 1)
         findtrain = Button(self.trainSearchWin, text = "Find Trains", command=self.selectDepart)
         findtrain.grid(row=2, column=0, pady = 5)
         
@@ -334,10 +327,18 @@ class gtTrains:
         sql = "SELECT TrainRoutes.TrainNumber, CONCAT(DepartureStop.DepartureTime,' - ', ArrivalStop.ArrivalTime, '\n', TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime)), DepartureStop.DepartureTime, ArrivalStop.ArrivalTime, TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) as Duration, TrainRoutes.FirstClassPrice, TrainRoutes.SecondClassPrice FROM TrainRoutes INNER JOIN Stops as ArrivalStop ON TrainRoutes.TrainNumber = ArrivalStop.TrainNumber INNER JOIN Stops as DepartureStop ON TrainRoutes.TrainNumber = DepartureStop.TrainNumber WHERE DepartureStop.StationName = %s AND ArrivalStop.StationName = %s AND TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) > '00:00:00'"
         depart = self.stationDict[self.departVar.get()]
         arrive = self.stationDict[self.arriveVar.get()]
+        currentTime = datetime.datetime.now()
+        date = self.date2.get()
         selectDepartList = []
         check = cursor.execute(sql, (depart,arrive))
         if check == 0:
             messagebox.showerror("Error", "No routes available")
+            self.trainSearchWin.deiconify()
+        if date == currentTime.strftime("%m/%d/%Y"):
+            messagebox.showerror("Error", "This is today's date")
+            self.trainSearchWin.deiconify()
+        if date < currentTime.strftime("%m/%d/%Y"):
+            messagebox.showerror("Error", "This date is in the past")
             self.trainSearchWin.deiconify()
         else:
             self.selectDepartWin = Toplevel()
