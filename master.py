@@ -20,13 +20,16 @@ class gtTrains:
         self.registerWin.withdraw()
         ##delete later
         self.loginWin.withdraw()
-        #self.homePage()
+        self.homePage()
         #self.addSchoolInfo()
         #self.viewSchedule()
         #self.trainSearch()
         #self.passengerInfo()
         #self.makeReservation()
-        self.pay()
+        #self.payInfo()
+        #self.submitRes()
+        #self.searchRes()
+        #self.cancelReservation()
     def loginPage(self, rootWin):
         # window setup
         self.loginWin = rootWin
@@ -40,15 +43,15 @@ class gtTrains:
         userpass = Frame(self.loginWin)#, bg= "gold")
         userpass.grid(row = 1, column = 0, sticky = E)
         ## row 0 - login title
-        loginLabel = Label(userpass, text = "Login", font=("Arial", 20))#, bg = "gold")
+        loginLabel = Label(userpass, text = "Login", font="Arial 20")
         loginLabel.grid(row = 0, columnspan = 20, sticky = N+S+W+E, ipady = 20)
         ## row 0 - username
-        userLabel = Label(userpass, text = "Username:")#, bg = "gold")
+        userLabel = Label(userpass, text = "Username:")
         userLabel.grid(row = 1, column = 18, sticky = E, ipadx = 0, padx = 15)
         userEntry = Entry(userpass, textvariable = self.username, width = 37)
         userEntry.grid(row = 1, column = 19, sticky = E, padx = 15, pady = 15)
         ## row 1 - password
-        passLabel = Label(userpass, text = "Password:")#, bg = "gold")
+        passLabel = Label(userpass, text = "Password:")
         passLabel.grid(row = 2, column = 18, sticky = E, ipadx = 0, padx = 15)
         passEntry = Entry(userpass, textvariable = self.password, width = 37)
         passEntry.grid(row = 2, column = 19, sticky = E, padx = 15, pady = 15)
@@ -135,9 +138,9 @@ class gtTrains:
         self.registerbuttons = Frame(self.registerWin)
         self.registerbuttons.grid(row = 1, column = 0)
         ## buttons
-        cancel = Button(self.registerbuttons, text = "Cancel")#, command = self.backToLogin)
+        cancel = Button(self.registerbuttons, text = "Cancel", command = self.backToLogin)
         cancel.grid(row = 0, column = 0, ipadx = 60)
-        register = Button(self.registerbuttons, text = "Register")#, command = self.registerNew)
+        register = Button(self.registerbuttons, text = "Register", command = self.registerNew)
         register.grid(row = 0, column = 1, ipadx = 60)
 
     def backToLogin(self):
@@ -201,7 +204,7 @@ class gtTrains:
                           padx=10,pady=5, font = "Arial 10", command = self.viewSchedule)
         button00.pack(fill=X)
         button01 = Button(buttonframe, text = "Make a new reservation",
-                          padx=10,pady=5, font = "Arial 10", command = self.makeReservation)
+                          padx=10,pady=5, font = "Arial 10", command = self.trainSearch)
         button01.pack(fill=X)
         button02 = Button(buttonframe, text = "Update a reservation",
                           padx=10,pady=5, font = "Arial 10", command = self.updateReservation)
@@ -330,7 +333,6 @@ class gtTrains:
         self.trainSearchWin.withdraw()
         self.connect()
         cursor = self.connect().cursor()
-        ## tell amy to fix SQL
         sql = "SELECT TrainRoutes.TrainNumber, CONCAT(DepartureStop.DepartureTime,' - ', ArrivalStop.ArrivalTime, '\n', TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime)), DepartureStop.DepartureTime, ArrivalStop.ArrivalTime, TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) as Duration, TrainRoutes.FirstClassPrice, TrainRoutes.SecondClassPrice FROM TrainRoutes INNER JOIN Stops as ArrivalStop ON TrainRoutes.TrainNumber = ArrivalStop.TrainNumber INNER JOIN Stops as DepartureStop ON TrainRoutes.TrainNumber = DepartureStop.TrainNumber WHERE DepartureStop.StationName = %s AND ArrivalStop.StationName = %s AND TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) > '00:00:00'"
         depart = self.stationDict[self.departVar.get()]
         arrive = self.stationDict[self.arriveVar.get()]
@@ -352,7 +354,8 @@ class gtTrains:
                 header.grid(row = 0, column = i)
             cursor.execute(sql, (depart,arrive))
             for record in cursor:
-                selectDepartList.append([record[0], record[1].decode("utf-8"), record[5], record[6]])
+                #print(record)
+                selectDepartList.append([record[0], record[1], record[5], record[6]])
             print(selectDepartList)
             #print(type(selectDepartList[0][1]))
             cursor.close()
@@ -408,6 +411,7 @@ class gtTrains:
         self.selectDepartWin.deiconify()
         
     def makeReservation(self):
+        ## a lot of stuff to add here: removing shit etc gross
         #self.passengerInfo.withdraw()
         self.makeResWin = Toplevel()
         self.makeResWin.title("Make Reservation")
@@ -442,9 +446,11 @@ class gtTrains:
         back.grid(row=7, column=0, columnspan=70, pady=20)
         submit = Button(self.makeResWin, text="Submit", command=self.submitRes)
         submit.grid(row=7, column=80, columnspan=100, pady=20)
+        
     def addTrain(self):
         pass
-    def pay(self):
+    
+    def payInfo(self):
         #self.makeReservation.withdraw()
         self.payWin=Toplevel()
         self.payWin.title("Payment Information")
@@ -483,23 +489,202 @@ class gtTrains:
         delSub.grid(row=5, column=3, columnspan=2)
         
     def addCard(self):
-        pass
+        #add the card to the database
+        self.payInfo.withdraw()
+        
     def deleteCard(self):
-        pass
+        #delete the card from the database
+        self.payInfo.withdraw()
+        self.passengerInfoWin.deiconify()
+        
     def backPassInfo(self):
         self.makeResWin.withdraw()
         self.passengerInfoWin.deiconify()
+        
     def submitRes(self):
-        pass
+        #self.makeResWin.withdraw()
+        self.confirmWin = Toplevel()
+        self.confirmWin.title("Confirmation")
+        title = Label(self.confirmWin, text="Confirmation", font="Arial 20")
+        title.grid(row = 0, column = 0, columnspan = 2)
+        res = Label(self.confirmWin, text="Reservation ID")
+        res.grid(row = 1, column=0)
+        ## generate a reservationID
+        ## commit things to the database lol
+        resEntry = Entry(self.confirmWin)
+        resEntry.grid(row = 1, column=1)
+        d = Label(self.confirmWin, text="Thank you for your purchase! Please save reservation ID for your records.")
+        d.grid(row=2, column=0, columnspan=2)
+        b = Button(self.confirmWin, text="Back to Choose Functionality", command=self.backHome)
+        b.grid(row=3, column=0, columnspan=2)
+        
+    def backHome(self):        
+        self.confirmWin.withdraw()
+        self.homePage()
+        
     def updateReservation(self):
-        pass
+        self.homeWin.withdraw()
+        self.updateResWin = Toplevel()
+        self.updateResWin.title("Update Reservation")
+        title = Label(self.updateResWin, text = "Update Reservation", font="Arial 20")
+        title.grid(row=0, column=0, columnspan = 3)
+        resID = Label(self.updateResWin, text = "ReservationID")
+        resID.grid(row=1, column=0)
+        resEntry = Label(self.updateResWin)
+        resEntry.grid(row=1, column=1)
+        search = Button(self.updateResWin, text = "Search", command=self.searchRes)
+        search.grid(row=1, column=2)
+        back = Button(self.updateResWin, text="Back", command=self.updateToFunc)
+        back.grid(row=2, column=0, columnspan=3)
+        
+    def updateToFunc(self):
+        self.updateResWin.withdraw()
+        self.homePage()
+        
+    def searchRes(self):
+        ##error if resID not found or not made by customer
+        #self.updateResWin.withdraw()
+        self.selectResWin = Toplevel()
+        self.selectResWin.title("Update Reservation")
+        title = Label(self.selectResWin, text="Update Reservation", font="Arial 20")
+        title.grid(row=0,column=0, columnspan=100)
+        table = Frame(self.selectResWin)
+        table.grid(row=1, column=0, columnspan=100, pady=20, padx=20)
+        hList = ["Select", "Train\n(Train Number)", "Time\n(Duration)", "Departs From", "Arrives At", "Class", "Price", "# of Baggage(s)", "Passenger Name"]
+        for i in range(len(hList)):
+            header = Label(table, text = hList[i])
+            header.grid(row = 0, column = i)
+        back = Button(self.selectResWin, text="Back", command=self.searchToSelectRes)
+        back.grid(row=2, column=5)
+        nxt = Button(self.selectResWin, text="Next", command=self.selectToUpdateRes)
+        nxt.grid(row=2, column=15)
+        
+    def searchToSelectRes(self):
+        self.selectResWin.withdraw()
+        self.updateResWin.deiconify()
+
+    def selectToUpdateRes(self):
+        self.selectResWin.withdraw()
+        #self.updateResWin
+        #do like all of this function LOL
+        
     def cancelReservation(self):
-        pass
+        self.homeWin.withdraw()
+        self.cancelResIDWin = Toplevel()
+        self.cancelResIDWin.title("Cancel Reservation")
+        title = Label(self.cancelResIDWin, text = "Cancel Reservation", font="Arial 20")
+        title.grid(row=0, column=0, columnspan = 3)
+        resID = Label(self.cancelResIDWin, text = "ReservationID")
+        resID.grid(row=1, column=0)
+        resEntry = Label(self.cancelResIDWin)
+        resEntry.grid(row=1, column=1)
+        search = Button(self.cancelResIDWin, text = "Search", command=self.cancelRes)
+        search.grid(row=1, column=2)
+        back = Button(self.cancelResIDWin, text="Back", command=self.cancelToFunc)
+        back.grid(row=2, column=0, columnspan=3)
+        
+    def cancelToFunc(self):
+        self.cancelResIDWin.withdraw()
+        self.homePage()
+        
+    def cancelRes(self):
+        self.cancelResIDWin.withdraw()
+        self.cancelResWin = Toplevel()
+        self.cancelResWin.title("Cancel Reservation")
+        title = Label(self.cancelResWin, text="Cancel Reservation", font="Arial 20")
+        title.grid(row=0,column=0, columnspan=100)
+        table = Frame(self.cancelResWin)
+        table.grid(row=1, column=0, columnspan=100, pady=20, padx=20)
+        hList = ["Train\n(Train Number)", "Time\n(Duration)", "Departs From", "Arrives At", "Class", "Price", "# of Baggage(s)", "Passenger Name"]
+        for i in range(len(hList)):
+            header = Label(table, text = hList[i])
+            header.grid(row = 0, column = i)
+        aFrame = Frame(self.cancelResWin)
+        aFrame.grid(row=2, column=0, pady=10, padx=20, sticky=W)
+        acList = ["Totals Cost of Reservation", "Date of Cancellation", "Amount to be Refunded"]
+        for i in range(len(acList)):
+            header = Label(aFrame, text = acList[i])
+            header.grid(row = i+1, column = 0)
+        back = Button(self.cancelResWin, text="Back", command=self.cancelBack)
+        back.grid(row=3, column=5)
+        nxt = Button(self.cancelResWin, text="Next", command=self.cancelSubmit)
+        nxt.grid(row=3, column=15)
+        ## make entry things
+        
+    def cancelBack(self):
+        self.cancelResWin.withdraw()
+        self.cancelReservation()
+        
+    def cancelSubmit(self):
+        self.cancelResWin.withdraw()
+        #sql changes
+        
+    def viewReview(self):
+        ## add function to homepage
+        self.homeWin.withdraw()
+        self.viewReviewWin = Toplevel()
+        self.viewReviewWin.title("View Review")
+        title = Label(self.viewReviewWin, text = "View Review", font="Arial 20")
+        title.grid(row=0, column=0, columnspan = 2)
+        train = Label(self.viewReviewWin, text = "Train Number")
+        train.grid(row=1, column=0)
+        trainEntry = Label(self.viewReviewWin)
+        trainEntry.grid(row=1, column=1)
+        back = Button(self.viewReviewWin, text="Back", command=self.viewToHome)
+        back.grid(row=2, column=0)
+        nxt = Button(self.viewReviewWin, text = "Next", command=self.viewToHome)
+        nxt.grid(row=2, column=1)
+        
+    def viewToHome(self):
+        self.viewReviewWin.withdraw()
+        self.homePage()
+        
+    def viewReviews(self):
+        self.viewReviewWin.withdraw()
+        self.viewReviewsWin = Toplevel()
+        self.viewReviewsWin.title("View Review")
+        title = Label(self.viewReviewsWin, text = "View Review", font="Arial 20")
+        title.grid(row=0, column=0, columnspan = 2)
+        table = Frame(self.viewReviewsWin)
+        table.grid(row=1, column=0, columnspan=100, pady=20, padx=20)
+        hList = ["Rating", "Comment"]
+        for i in range(len(hList)):
+            header = Label(table, text = hList[i])
+            header.grid(row = 0, column = i)
+        ##populate the table with SQL
+            
+    def viewReviewsToHome(self):
+        self.viewReviewsWin.withdraw()
+        self.homePage()
+        
     def giveReview(self):
-        pass
+        self.homeWin.withdraw()
+        self.giveReviewWin = Toplevel()
+        self.giveReviewWin.title("Give Review")
+        title = Label(self.giveReviewWin, text = "Give Review", font="Arial 20")
+        title.grid(row=0, column=0)
+        hList = ["Train Number", "Rating", "Comment"]
+        hFrame = Frame(self.giveReviewWin)
+        hFrame.grid(row=1, column=0)
+        for i in range(len(hList)):
+            header = Label(hFrame, text = hList[i])
+            header.grid(row = i, column = 0)
+        train = Entry(hFrame)
+        train.grid(row=0, column=1)
+        ##option menu for rating
+        rating = Entry(hFrame)
+        rating.grid(row=1, column=1)
+        comment = Entry(hFrame)
+        comment.grid(row=2, column=1)
+        back = Button(self.giveReviewWin, text="Submit", command=self.submitReview)
+        back.grid(row=2, column=0)
+        
+    def submitReview(self):
+        ## commit to the database
+        self.homePage()
     
     def addSchoolInfo(self):
-        self.homewin.withdraw()
+        self.homeWin.withdraw()
         self.addSchoolWin = Toplevel()
         self.addSchoolWin.title("Add School Info")
         addLabel = Label(self.addSchoolWin, text = "Add School Info", font = "Arial 20", pady = 20, padx = 30)
