@@ -1,34 +1,55 @@
 // Figure 1: Log in
+// Status: Works
 SELECT *
 FROM Users
 WHERE BINARY Username = %s AND BINARY Password = %s
 
 // Check if user is Manager
+// Status: Works
 SELECT *
 FROM Managers
-WHERE BINARY Username %s
+WHERE BINARY Username = %s
 
 // Check if user is Customer
+// Status: Works
 SELECT *
 FROM Customers
-WHERE BINARY Username %s
+WHERE BINARY Username = %s
 
 // Figure 2: New user registration
+// Status: Works
 INSERT INTO Customers
 VALUES (%s, %s, %s)
 
+INSERT INTO Users
+VALUES (%s, %s)
+
+// Check if username has been used
+SELECT *
+FROM Users
+WHERE BINARY Username = %s
+
+// Unique email or nah
+SELECT *
+FROM Customers
+WHERE Email = %s
+
 // Figure 4: Add school info
+// Status: Works
 UPDATE Customers
-SET Student = “yes”
-WHERE Username = %s
+SET Customers.Student= "yes"
+WHERE Customers.Username = %s AND Customers.Email LIKE '%@%.edu%'
 
 // Figure 5: View train schedule
+// Status: Works
 SELECT ArrivalTime, DepartureTime, StationName
 FROM Stops
 WHERE TrainNumber = %s
+ORDER BY ArrivalTime
 
 // Figure 6: Make a reservation dropdown
-SELECT CONCAT(StationName," (", Location, ")"), StationName
+// Status: Works
+SELECT CONCAT(StationName," (", Location, ")") as dropdownChoices, StationName
 FROM Stations
 
 // Figure 7: Select departure
