@@ -51,20 +51,21 @@ WHERE DepartureStop.StationName = %s AND
   TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) > "00:00:00"
   -- TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) <> "NULL"
 
+// NOT TESTED
 // Figure 8: Travel extras and passenger info
 Update ReservationDetails
 SET Baggage = %s, PassengerName = %s
 WHERE ReservationID = %s
 
 // Figure 8: Make reservation 1 use card dropdown
-SELECT PaymentInfo.CardNummber
+SELECT CardNumber
 FROM PaymentInfo
-WHERE PaymentInfo.Username = %s
+WHERE Username = %s
 
 // Figure 8: Make reservation 1 Student or nah
 SELECT Customers.Student
 FROM Customers
-WHERE Customers.Username
+WHERE Customers.Username = %s
 
 // Figure 8: Make reservation 1
 -- SELECT
@@ -88,16 +89,20 @@ WHERE Customers.Username
 --   AND TIMEDIFF(ArrivalStop.ArrivalTime ,DepartureStop.DepartureTime) > "00:00:00"
 
 // Figure 10: Payment info Add card
-Update PaymentInfo
-SET CardNummber = %s, NameOnCard = %s, CVV = %s, ExpDate = %s
-WHERE PaymentInfo.Username = %s
+INSERT INTO PaymentInfo
+VALUES (%s, %s, %s, %s, Username)
 
-// Figure 10: Payment info Find Card to Delete
-SELECT PaymentInfo.CardNummber
+// Figure 10: Payment info Find Card to Delete dropdown
+-- SELECT PaymentInfo.CardNummber
+-- FROM PaymentInfo
+-- INNER JOIN Customers ON PaymentInfo.Username = Customers.Username
+-- WHERE Customers = %s
+SELECT CardNumber
 FROM PaymentInfo
-INNER JOIN Customers ON PaymentInfo.Username = Customers.Username
-WHERE Customers = %s
+WHERE Username = %s
 
+
+// NOT TESTED
 // Figure 10: Payment info Delete Card
 DELETE PaymentInfo
 FROM PaymentInfo
@@ -106,10 +111,18 @@ INNER JOIN Reservations ON PaymentInfo.CardNummber = Reservations.CardNummber
 WHERE Customers = %s AND
   Reservations.Status = 0; --0 bit means the reservation was canceled
 
+DELETE PaymentInfo.*
+FROM PaymentInfo
+INNER JOIN Customers ON PaymentInfo.Username = Customers.Username
+INNER JOIN Reservations ON PaymentInfo.CardNumber = Reservations.CardNumber
+WHERE Customers.Username = "aliu3" AND
+  Reservations.Status = 0
+
+
 // Pigure 11: Confirmation screen
 // Add to Reservations
 INSERT INTO Reservations
-VALUES (%s, %s, %s, %s)
+VALUES (%s, %s, %s, %s, %s)
 
 // Pigure 11: Confirmation screen
 // Add to ReservationDetails
@@ -127,16 +140,29 @@ WHERE Reservations.ReservationID = %s AND
   Reservations.Status = 1 AND
   -- TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) > "00:00:00"
 
-// NEED SOMETHING FOR UPDATE TOTAL COST
-// HOW TO GET TOTAL COST THOUGH???
-// ADD TOTAL COST ATTRIBUTE
+// Figure 14: Update reservation 3
 
-// Cancel reservation
+// Figure 15: Cancel reservation
 
-// View review
+// Figure 16: View review
+SELECT Rating, Comment
+FROM Reviews
+WHERE TrainNumber = %s
 
-// Give review
+// Figure 17: Give review
+INSERT INTO Reviews
+VALUES (%s, %s, %s, %s, %s)
 
-// Manager - View revenue report
+// Figure 19: Manager - View revenue report
+// Call it three times for the most recent three monthes
+SELECT DATEPART(mm, DepartureDate), SUM(Reservations.TotalSum)
+FROM Reservations
+INNER JOIN ReservationDetails ON ReservationDetails.ReservationID = Reservations.Reservations
+WHERE DATEPART(mm, DepartureDate) = %s
 
-// Manager - View popular route report
+// Las figure: Manager - View popular route report
+SELECT DATEPART(mm, DepartureDate), TrainNumber, COUNT(*)
+FROM ReservationDetails
+INNER JOIN TrainRoutes ON ReservationDetails.ReservationID = Reservations.ReservationID
+WHERE DATEPART(mm, DepartureDate) = %s
+GROUP BY TrainNumber
