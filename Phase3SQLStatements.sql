@@ -116,10 +116,9 @@ DELETE PaymentInfo
 FROM PaymentInfo
 INNER JOIN Customers ON PaymentInfo.Username = Customers.Username
 LEFT OUTER JOIN Reservations ON PaymentInfo.CardNumber = Reservations.CardNumber
-WHERE Customers.Username = "trainsRcool" AND
+WHERE Customers.Username = %s AND
   (Reservations.Status = 0 OR Reservations.Status is NULL) AND
-  (PaymentInfo.CardNumber = 2845963347544833 OR PaymentInfo.CardNumber is NULL)
-
+  (PaymentInfo.CardNumber = %s OR PaymentInfo.CardNumber is NULL)
 
 // Figure 11: Confirmation screen
 // Status: Works
