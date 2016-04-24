@@ -478,12 +478,10 @@ class gtTrains:
                 header.grid(row = 0, column = i)
             sql = "SELECT Customers.Student FROM Customers WHERE Customers.Username = %s"
             self.var = IntVar()
-            print("range", len(self.resList))
             for i in range(len(self.resList)):
                 for j in range(len(self.resList[0])):
                     qwerty = Label(table, text=self.resList[i][j])
                     qwerty.grid(row = i+1, column = j)
-                    print("row ", i, ", column ", j)
                 remove = Checkbutton(table, text="Remove", variable=self.var, onvalue = i+1, command=self.removeTicket)
                 remove.grid(row=i+1, column = 8)
             cursor = self.connect().cursor()
@@ -518,10 +516,13 @@ class gtTrains:
             cardList = []
             for record in cursor:
                 cardList.append(record[0])
-            self.payWith = StringVar(self.makeResWin)
-            self.payWith.set(cardList[0])
-            ucOM = OptionMenu(self.makeResWin, self.payWith, *cardList)
-            ucOM.grid(row=5, column=1, padx = 5)
+            try:
+                self.payWith = StringVar(self.makeResWin)
+                self.payWith.set(cardList[0])
+                ucOM = OptionMenu(self.makeResWin, self.payWith, *cardList)
+                ucOM.grid(row=5, column=1, padx = 5)
+            except:
+                pass
             ucB = Button(self.makeResWin, text="Add Card", command=self.payInfo)
             ucB.grid(row=5, column=2)
             cat = Button(self.makeResWin, text="Add Train", command=self.addTrain)
