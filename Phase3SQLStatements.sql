@@ -231,14 +231,46 @@ VALUES (%s, %s, %s, %s, %s)
 
 // Figure 19: Manager - View revenue report
 // Call it three times for the most recent three monthes
-SELECT DATEPART(mm, DepartureDate), SUM(Reservations.TotalSum)
+SELECT SUM(Reservations.TotalCost)
 FROM Reservations
-INNER JOIN ReservationDetails ON ReservationDetails.ReservationID = Reservations.Reservations
-WHERE DATEPART(mm, DepartureDate) = %s
+WHERE Reservations.ReservationID in (
+  SELECT ReservationID
+  FROM ReservationDetails
+  WHERE MONTH(DepartureDate) = %s
+)
+UNION
+SELECT SUM(Reservations.TotalCost)
+FROM Reservations
+WHERE Reservations.ReservationID in (
+  SELECT ReservationID
+  FROM ReservationDetails
+  WHERE MONTH(DepartureDate) = %s
+)
+UNION
+SELECT SUM(Reservations.TotalCost)
+FROM Reservations
+WHERE Reservations.ReservationID in (
+  SELECT ReservationID
+  FROM ReservationDetails
+  WHERE MONTH(DepartureDate) = %s
+)
 
 // Las figure: Manager - View popular route report
-SELECT DATEPART(mm, DepartureDate), TrainNumber, COUNT(*)
+SELECT MONTH(DepartureDate) AS Month, TrainNumber AS Train, COUNT(TrainNumber) AS Num
 FROM ReservationDetails
-INNER JOIN TrainRoutes ON ReservationDetails.ReservationID = Reservations.ReservationID
-WHERE DATEPART(mm, DepartureDate) = %s
-GROUP BY TrainNumber
+INNER JOIN Reservations ON ReservationDetails.ReservationID = Reservations.ReservationID
+WHERE MONTH(DepartureDate) = %s
+GROUP BY Month
+UNION
+SELECT MONTH(DepartureDate) AS Month, TrainNumber AS Train, COUNT(TrainNumber) AS Num
+FROM ReservationDetails
+INNER JOIN Reservations ON ReservationDetails.ReservationID = Reservations.ReservationID
+WHERE MONTH(DepartureDate) = %s
+GROUP BY Month
+UNION
+SELECT MONTH(DepartureDate) AS Month, TrainNumber AS Train, COUNT(TrainNumber) AS Num
+FROM ReservationDetails
+INNER JOIN Reservations ON ReservationDetails.ReservationID = Reservations.ReservationID
+WHERE MONTH(DepartureDate) = %s
+GROUP BY Month
+ORDER BY Month ASC, Num DESC
