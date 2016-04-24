@@ -115,10 +115,11 @@ WHERE Username = %s
 DELETE PaymentInfo
 FROM PaymentInfo
 INNER JOIN Customers ON PaymentInfo.Username = Customers.Username
-INNER JOIN Reservations ON PaymentInfo.CardNumber = Reservations.CardNumber
-WHERE Customers.Username = %s AND
-  Reservations.Status = 0 AND
-  PaymentInfo.CardNumber = %s
+LEFT OUTER JOIN Reservations ON PaymentInfo.CardNumber = Reservations.CardNumber
+WHERE Customers.Username = "trainsRcool" AND
+  (Reservations.Status = 0 OR Reservations.Status is NULL) AND
+  (PaymentInfo.CardNumber = 2845963347544833 OR PaymentInfo.CardNumber is NULL)
+
 
 // Figure 11: Confirmation screen
 // Status: Works
@@ -149,6 +150,7 @@ INSERT INTO ReservationDetails (ReservationID, TrainNumber, PassengerName, Bagga
 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
 
 // Figure 13: Update reservation 2
+// Returns number of tickets there are in a reservation
 // Status: Nope
 // %s = ReservationID
 SELECT COUNT(*)
