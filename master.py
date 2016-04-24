@@ -716,14 +716,22 @@ class gtTrains:
         self.customerHome()
         
     def searchRes(self):
-        ## throw error if resID not found or not made by customer
-        ## cant update a cancelled reservation
-        ##sql statements lol
-        ## also, radiobuttons
-        ##
-        ##
-        ##
-        ##
+        resnum = self.resID.get()
+        cursor = self.connect().cursor()
+        sql = "SELECT * FROM ReservationDetails WHERE ReservationID = %s"
+        count = cursor.execute(sql, resnum)
+        raw = cursor.fetchall()
+        self.sqlList = []
+        for x in raw:
+            self.sqlList.append(x[1:])
+        if count == 0:
+            messagebox.showerror("Error", "No such reservation exists")
+        sql = "SELECT Status FROM Reservations WHERE ReservationID = %s"
+        cursor.execute(sql, resnum)
+        raw = cursor.fetchall()
+        cancelled = raw[0][0]
+        if cancelled == '0':
+            messagebox.showerror("Error", "You cannot update a cancelled reservation")
         self.v2 = IntVar()
         self.updateResWin.withdraw()
         self.selectResWin = Toplevel()
@@ -732,20 +740,19 @@ class gtTrains:
         title.grid(row=0,column=0, columnspan=100)
         table = Frame(self.selectResWin)
         table.grid(row=1, column=0, columnspan=100, pady=20, padx=20)
-        hList = ["Select", "Train\n(Train Number)", "Time\n(Duration)", "Departs From", "Arrives At", "Class", "Price", "# of Baggage(s)", "Passenger Name"]
+        hList = ["Select", "Train\n(Train Number)", "Passenger Name", "Baggage", "Class", "Departs From", "Arrives At", "Departure Date"]
         for i in range(len(hList)):
             header = Label(table, text = hList[i])
             header.grid(row = 0, column = i)
-        ##sqllist = blahblah
-        ##for i in range(len(sqllist)):
-            ##r = Radiobutton(table, variable=self.v2, value=i+1)
-            ##r.grid(row=i+1, column=0)
-            ##for j in range(len(sqllist[0])):
-                ##l = Label(table, text=sqllist[i][j])
-                ##l.grid(row=i+1, column=i+1)                    
-        back = Button(self.selectResWin, text="Back", command=self.searchToSelectRes)
+        for i in range(len(self.sqlList)):
+            r = Radiobutton(table, variable=self.v2, value=i)
+            r.grid(row=i+1, column=0)
+            for j in range(len(self.sqlList[0])):
+                l = Label(table, text=self.sqlList[i][j])
+                l.grid(row = i + 1, column = j + 1)                    
+        back = Button(self.selectResWin, text= "Back", command=self.searchToSelectRes)
         back.grid(row=2, column=5)
-        nxt = Button(self.selectResWin, text="Next", command=self.selectToUpdateRes)
+        nxt = Button(self.selectResWin, text= "Next", command=self.selectToUpdateRes)
         nxt.grid(row=2, column=15)
         
     def searchToSelectRes(self):
@@ -753,36 +760,35 @@ class gtTrains:
         self.updateResWin.deiconify()
 
     def selectToUpdateRes(self):
-        pass
-        ## check that the current date is at least a day before departure day
-        ## 
-        ##
-        ##
-        ##
-        ##
-        ##
-        #self.selectResWin.withdraw()
-        #do like all of this function LOL
-        #
-        #
-        #self.newdate = StringVar()
-        #self.newdate.set("")
-        #new = Label(self., text="New Departure Date")
-        #new.grid(row=, column=0)
-        #ndate = Entry(self., textvariable=self.newdate)
-        #ndate.grid(row=, column=1)
-        #avail = Button(Self., text="Search Availability", command=self.checkAvail)
-        #avail.grid(row=, column=2)
-        #up = Label(self. , text="Updated Train Ticket")
-        #up.grid(row=,column=0)
-        #change = Label(self. , text="Change Fee")
-        #change.grid(row=, column=0)
-        #changeE = Entry(self. , text="50", state="readonly")
-        #changeE.grid(row=, column=1)
-        #cost = Label(self. , text="Updated Total Cost")
-        #cost.grid(row=, column=0)
-        #costE = Entry(self. , text=, state="readonly")
-        #costE.grid(row=, column=1)
+        self.selectResWin.withdraw()
+        self.editResWin.Toplevel()
+        self.editResWin,title("Update Reservation")
+        selection = self.v2.get()
+        today = datetime.date.today()
+        olddate = self.sqlList[selection][-1]
+        if today == olddate or today+1 == olddate:
+            messagebox.showerror("Error", "You cannot change a reservation the day before the trip")
+        self.newdate = StringVar()
+        self.newdate.set("")
+        new = Label(self.editResWin, text="New Departure Date")
+        new.grid(row=1, column=0)
+        ndate = Entry(self.editResWin, textvariable=self.newdate)
+        ndate.grid(row=1, column=1)
+        avail = Button(self.editResWin, text="Search Availability", command=self.checkAvail)
+        avail.grid(row=2, column=2)
+        up = Label(self.editResWin , text="Updated Train Ticket")
+        up.grid(row=3,column=0)
+        change = Label(self.editResWin , text="Change Fee")
+        change.grid(row=4, column=0)
+        changeE = Entry(self.editResWin , text="50", state="readonly")
+        changeE.grid(row=4, column=1)
+        cost = Label(self.editResWin , text="Updated Total Cost")
+        cost.grid(row= 5, column=0)
+        newcost = 6
+        updatedcost = StringVar()
+        updatedcost.set(newcost)
+        costE = Entry(self.editResWin , textvariable = updatedcost, state="readonly")
+        costE.grid(row=5, column=1)
         
     def cancelReservation(self):
         self.custHomeWin.withdraw()
