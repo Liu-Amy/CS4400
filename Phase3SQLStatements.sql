@@ -172,12 +172,20 @@ WHERE ReservationID = %s
 
 // Figure 13: Update reservation 2
 // Status: Works
+// Get TrainNumber in ReservationDetails
+SELECT TrainNumber
+FROM ReservationDetails
+WHERE ReservationID = %s
+
+// Figure 13: Update reservation 2
+// Status: Works
 // Shows table of details of reservation; Used to generate table
 SELECT TrainRoutes.TrainNumber,
   CONCAT(ReservationDetails.DepartureDate, " " , DepartureStop.DepartureTime," - ", ArrivalStop.ArrivalTime, "\n",
     TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime)) as Time,
   CONCAT(DepartureStation.Location, "(", DepartureStation.StationName, ")") as DepartsFrom,
   CONCAT(ArrivalStation.Location, "(", ArrivalStation.StationName, ")") as ArrivesAt,
+  ReservationDetails.Class,
   TrainRoutes.FirstClassPrice,
   TrainRoutes.SecondClassPrice,
   ReservationDetails.Baggage,
@@ -189,11 +197,12 @@ INNER JOIN Stops as ArrivalStop on TrainRoutes.TrainNumber = ArrivalStop.TrainNu
 INNER JOIN Stops as DepartureStop on TrainRoutes.TrainNumber = DepartureStop.TrainNumber
 INNER JOIN Stations as ArrivalStation on ArrivalStop.StationName = ArrivalStation.StationName
 INNER JOIN Stations as DepartureStation on DepartureStop.StationName = DepartureStation.StationName
-WHERE ReservationDetails.ReservationID = %s
+WHERE ReservationDetails.ReservationID = 0 AND
+  ReservationDetails.TrainNumber = %s AND
   Reservations.Username = %s AND
   DepartureStop.StationName = %s AND
   ArrivalStop.StationName = %s AND
-  Reservations.Status = 2 AND
+  Reservations.Status = "1" AND
   TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) > "00:00:00"
 
 // Figure 14: Update reservation 3
@@ -221,6 +230,7 @@ SELECT TrainRoutes.TrainNumber,
     TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime)) as Time,
   CONCAT(DepartureStation.Location, "(", DepartureStation.StationName, ")") as DepartsFrom,
   CONCAT(ArrivalStation.Location, "(", ArrivalStation.StationName, ")") as ArrivesAt,
+  ReservationDetails.Class,
   TrainRoutes.FirstClassPrice,
   TrainRoutes.SecondClassPrice,
   ReservationDetails.Baggage,
@@ -232,11 +242,12 @@ INNER JOIN Stops as ArrivalStop on TrainRoutes.TrainNumber = ArrivalStop.TrainNu
 INNER JOIN Stops as DepartureStop on TrainRoutes.TrainNumber = DepartureStop.TrainNumber
 INNER JOIN Stations as ArrivalStation on ArrivalStop.StationName = ArrivalStation.StationName
 INNER JOIN Stations as DepartureStation on DepartureStop.StationName = DepartureStation.StationName
-WHERE ReservationDetails.ReservationID = %s
+WHERE ReservationDetails.ReservationID = 0 AND
+  ReservationDetails.TrainNumber = %s AND
   Reservations.Username = %s AND
   DepartureStop.StationName = %s AND
   ArrivalStop.StationName = %s AND
-  Reservations.Status = 1
+  Reservations.Status = "1" AND
   TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) > "00:00:00"
 
 // Figure 15: Cancel reservation - Date difference
