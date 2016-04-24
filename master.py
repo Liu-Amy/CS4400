@@ -8,7 +8,6 @@ import urllib.request
 import datetime
 import pymysql
 import time
-import re
 import csv
 import copy
 
@@ -19,9 +18,12 @@ class gtTrains:
         self.registerPage()
         self.registerWin.withdraw()
         ## delete later:
-        #self.loginWin.withdraw()
-        #self.customerHome()
+        self.loginWin.withdraw()
+        self.customerHome()
         #self.trainSearch()
+        #self.payInfo()
+        #self.cancelRes()
+        self.viewReview()
     def loginPage(self, rootWin):
         # window setup
         self.loginWin = rootWin
@@ -55,6 +57,7 @@ class gtTrains:
         register.grid(row = 0, column = 0, sticky = E, ipadx = 10)
         login = Button(self.loginframe, text = "Login", command = self.loginCheck)
         login.grid(row = 0, column = 1, sticky = E, ipadx = 10)
+
         
     def connect(self):
         ## connect to database
@@ -64,6 +67,7 @@ class gtTrains:
             return self.db
         except:
             messagebox.showerror("Error", "Check your internet connection")
+
             
     def loginCheck(self):
         ## have to check if manager or customer and then choose accordingly
@@ -147,13 +151,13 @@ class gtTrains:
         self.loginWin.deiconify()
         
     def registerNew(self):
-        ## checking if email address is valid
-        ##
-        ##
-        ##
-        ##
-        ##
-        
+        # check if email valid
+        #
+        #
+        #
+        #
+        #
+        # 
         ## getting strings
         emailStr = self.emailStr.get()
         passStr = self.passStr.get()
@@ -191,11 +195,6 @@ class gtTrains:
             self.backToLogin()
     
     def customerHome(self):
-        ## finding date here might be obsolete, maybe delete later
-        ##
-        ##
-        ##
-        ##
         ## window set up
         self.custHomeWin = Toplevel()
         self.custHomeWin.title("Choose Functionality")
@@ -468,7 +467,7 @@ class gtTrains:
         
     def makeReservation(self):
         ## do total cost
-        ##
+        ## truncate card number
         ##
         ##
         ##
@@ -521,7 +520,7 @@ class gtTrains:
             uc = Label(self.makeResWin, text="Use Card")
             uc.grid(row=5, column=0)
             ## options list of different cards in the system
-            sql = "SELECT CardNumber FROM PaymentInfo WHERE Username = %s"
+            sql = "SELECT Right(CardNumber,4) FROM PaymentInfo WHERE Username = %s"
             cursor.execute(sql, self.user)
             cardList = []
             for record in cursor:
@@ -557,7 +556,8 @@ class gtTrains:
             self.makeReservation()
     
     def payInfo(self):
-        self.makeReservation.withdraw()
+        cursor = self.connect().cursor()
+        #self.makeReservation.withdraw()
         self.payWin=Toplevel()
         self.payWin.title("Payment Information")
         title=Label(self.payWin, text="Payment Information", font="Arial 20")
@@ -576,32 +576,61 @@ class gtTrains:
         self.cardNo.set("")
         self.cvv = StringVar()
         self.cvv.set("")
-        nocEntry = Entry(aFrame, textvariable=self.nameOnCard)
-        nocEntry.grid(row = 1, column=1)
-        cNoEntry = Entry(aFrame, textvariable=self.cardNo)
-        cNoEntry.grid(row = 2, column=1)
-        cvvEntry = Entry(aFrame, textvariable=self.cvv)
-        cvvEntry.grid(row = 3, column=1)
+        self.exp = StringVar()
+        self.exp.set("")
+        nocEntry = Entry(aFrame, textvariable=self.nameOnCard, width=25)
+        nocEntry.grid(row = 1, column=1, sticky=W)
+        cNoEntry = Entry(aFrame, textvariable=self.cardNo, width=25)
+        cNoEntry.grid(row = 2, column=1, sticky=W)
+        cvvEntry = Entry(aFrame, textvariable=self.cvv, width=10)
+        cvvEntry.grid(row = 3, column=1, sticky=W)
+        expEntry = Entry(aFrame, textvariable=self.exp, width=10)
+        expEntry.grid(row=4, column=1, sticky=W)
         addSub = Button(aFrame, text="Submit", command=self.addCard)
         addSub.grid(row=5, column=0, columnspan=2)
         dc = Label(aFrame, text="Delete Card", font="Arial 14", width=30)
         dc.grid(row=0, column=3, columnspan=2)
         cn=Label(aFrame, text="Card Number")
         cn.grid(row=1, column=3)
-        sql = "SELECT CardNumber FROM PaymentInfo WHERE Username = %s"
-        #optionslist
-        #cnMenu = OptionMenu(aFrame, var, *#nameofoptionslist
-        #cnMenu.grid(row=1, column=4)
+        sql = "SELECT Right(CardNumber, 4) FROM PaymentInfo WHERE Username = %s"
+        #delete after!!!!!!!!!!
+        ##
+        ##
+        ##
+        self.user = "leodicaprio"
+        cursor.execute(sql, self.user)
+        cardList = []
+        for record in cursor:
+            cardList.append(record[0])
+        self.payWith = StringVar(aFrame)
+        self.payWith.set(cardList[0])
+        ucOM = OptionMenu(aFrame, self.payWith, *cardList)
+        ucOM.grid(row=1, column=4)
         delSub = Button(aFrame, text="Submit", command=self.deleteCard)
         delSub.grid(row=5, column=3, columnspan=2)
         
     def addCard(self):
+        ## throw errors for null and invalid input for inserting a credit card
+        ## committing to database
+        ##
+        ##
+        ##
+        ##
+        ##
+        ##
         sql = "INSERT INTO PaymentInfo VALUES (%s, %s, %s, %s, %s)"
+        cursor.execute(sql, (self.cNo.get(), self.noc.get(), self.cvv.get(), self.exp.get(), self.user))
         #cardnumber, nameoncard, cvv, exp date, username
         self.payInfo.withdraw()
         
     def deleteCard(self):
-        #delete the card from the database
+        ## deleting credit card
+        ## committing to database
+        ##
+        ##
+        ##
+        ##
+        ##
         self.payInfo.withdraw()
         self.passengerInfoWin.deiconify()
         
@@ -610,6 +639,15 @@ class gtTrains:
         self.passengerInfoWin.deiconify()
         
     def submitRes(self):
+        ## does the GUI generate reservationID or does the sql do that??
+        ## display reservation ID
+        ## insert into database
+        ## commit changes to database
+        #
+        #
+        #
+        #
+        #
         self.makeResWin.withdraw()
         self.startRes = True
         self.confirmWin = Toplevel()
@@ -618,9 +656,7 @@ class gtTrains:
         title.grid(row = 0, column = 0, columnspan = 2)
         res = Label(self.confirmWin, text="Reservation ID")
         res.grid(row = 1, column=0)
-        ## generate a reservationID
-        ## commit things to the database lol
-        resEntry = Entry(self.confirmWin)
+        resEntry = Entry(self.confirmWin, state="readonly")
         resEntry.grid(row = 1, column=1)
         d = Label(self.confirmWin, text="Thank you for your purchase! Please save reservation ID for your records.")
         d.grid(row=2, column=0, columnspan=2)
@@ -637,9 +673,11 @@ class gtTrains:
         self.updateResWin.title("Update Reservation")
         title = Label(self.updateResWin, text = "Update Reservation", font="Arial 20")
         title.grid(row=0, column=0, columnspan = 3)
-        resID = Label(self.updateResWin, text = "ReservationID")
-        resID.grid(row=1, column=0)
-        resEntry = Label(self.updateResWin)
+        resL = Label(self.updateResWin, text = "ReservationID")
+        resL.grid(row=1, column=0)
+        self.resID = StringVar()
+        self.resID.set("")
+        resEntry = Entry(self.updateResWin, textvariable=self.resID)
         resEntry.grid(row=1, column=1)
         search = Button(self.updateResWin, text = "Search", command=self.searchRes)
         search.grid(row=1, column=2)
@@ -651,8 +689,16 @@ class gtTrains:
         self.customerHome()
         
     def searchRes(self):
-        ##error if resID not found or not made by customer
-        #self.updateResWin.withdraw()
+        ##throw error if resID not found or not made by customer
+        ## cant update a cancelled reservation
+        ##sql statements lol
+        ##also, radiobuttons
+        ##
+        ##
+        ##
+        ##
+        self.v2 = IntVar()
+        self.updateResWin.withdraw()
         self.selectResWin = Toplevel()
         self.selectResWin.title("Update Reservation")
         title = Label(self.selectResWin, text="Update Reservation", font="Arial 20")
@@ -663,6 +709,13 @@ class gtTrains:
         for i in range(len(hList)):
             header = Label(table, text = hList[i])
             header.grid(row = 0, column = i)
+        ##sqllist = blahblah
+        ##for i in range(len(sqllist)):
+            ##r = Radiobutton(table, variable=self.v2, value=i+1)
+            ##r.grid(row=i+1, column=0)
+            ##for j in range(len(sqllist[0])):
+                ##l = Label(table, text=sqllist[i][j])
+                ##l.grid(row=i+1, column=i+1)                    
         back = Button(self.selectResWin, text="Back", command=self.searchToSelectRes)
         back.grid(row=2, column=5)
         nxt = Button(self.selectResWin, text="Next", command=self.selectToUpdateRes)
@@ -673,9 +726,36 @@ class gtTrains:
         self.updateResWin.deiconify()
 
     def selectToUpdateRes(self):
-        self.selectResWin.withdraw()
-        #self.updateResWin
+        pass
+        ## check that the current date is at least a day before departure day
+        ## 
+        ##
+        ##
+        ##
+        ##
+        ##
+        #self.selectResWin.withdraw()
         #do like all of this function LOL
+        #
+        #
+        #self.newdate = StringVar()
+        #self.newdate.set("")
+        #new = Label(self., text="New Departure Date")
+        #new.grid(row=, column=0)
+        #ndate = Entry(self., textvariable=self.newdate)
+        #ndate.grid(row=, column=1)
+        #avail = Button(Self., text="Search Availability", command=self.checkAvail)
+        #avail.grid(row=, column=2)
+        #up = Label(self. , text="Updated Train Ticket")
+        #up.grid(row=,column=0)
+        #change = Label(self. , text="Change Fee")
+        #change.grid(row=, column=0)
+        #changeE = Entry(self. , text="50", state="readonly")
+        #changeE.grid(row=, column=1)
+        #cost = Label(self. , text="Updated Total Cost")
+        #cost.grid(row=, column=0)
+        #costE = Entry(self. , text=, state="readonly")
+        #costE.grid(row=, column=1)
         
     def cancelReservation(self):
         self.custHomeWin.withdraw()
@@ -697,7 +777,24 @@ class gtTrains:
         self.customerHome()
         
     def cancelRes(self):
-        self.cancelResIDWin.withdraw()
+        # sql statement for list
+        # populate the table
+        # import total cost
+        # import amount to be refunded
+        ### 80% of total cost refunded if cancelled 7 days earlier
+        # than the earliest departure date
+        ### 50% refunded if cancelled more than 1 day earlier but less than 7 days earlier
+        # $50 cancellation fee, deducted from refund
+        ### cannot cancel a cancelled reservation
+        # commit changes
+        # refund can't be negatiive
+        # 
+        #
+        #
+        #
+        #
+        #
+        #self.cancelResIDWin.withdraw()
         self.cancelResWin = Toplevel()
         self.cancelResWin.title("Cancel Reservation")
         title = Label(self.cancelResWin, text="Cancel Reservation", font="Arial 20")
@@ -710,21 +807,36 @@ class gtTrains:
             header.grid(row = 0, column = i)
         aFrame = Frame(self.cancelResWin)
         aFrame.grid(row=2, column=0, pady=10, padx=20, sticky=W)
-        acList = ["Totals Cost of Reservation", "Date of Cancellation", "Amount to be Refunded"]
+        acList = ["Total Cost of Reservation", "Date of Cancellation", "Amount to be Refunded"]
         for i in range(len(acList)):
             header = Label(aFrame, text = acList[i])
-            header.grid(row = i+1, column = 0)
+            header.grid(row = i, column = 0)
+        tc = Entry(aFrame, state="readonly")
+        tc.grid(row=0, column=1)
+        currentTime = datetime.date.today().strftime("%m/%d/%Y")
+        date = StringVar()
+        date.set(currentTime)
+        dc = Entry(aFrame, textvariable=date, state="readonly")
+        dc.grid(row=1, column=1)
+        ar = Entry(aFrame, state="readonly")
+        ar.grid(row=2, column=1)
         back = Button(self.cancelResWin, text="Back", command=self.cancelBack)
-        back.grid(row=3, column=5)
-        nxt = Button(self.cancelResWin, text="Next", command=self.cancelSubmit)
-        nxt.grid(row=3, column=15)
-        ## make entry things
+        back.grid(row=3, column=0)
+        sbt = Button(self.cancelResWin, text="Submit", command=self.cancelSubmit)
+        sbt.grid(row=3, column=1)
         
     def cancelBack(self):
         self.cancelResWin.withdraw()
         self.cancelReservation()
         
     def cancelSubmit(self):
+        ## make the thing happen in the database
+        ## recalculate total cost and update it
+        ##
+        ##
+        ##
+        ##
+        ##
         self.cancelResWin.withdraw()
         #sql changes
         self.customerHome()
@@ -738,7 +850,9 @@ class gtTrains:
         title.grid(row=0, column=0, columnspan = 2)
         train = Label(self.viewReviewWin, text = "Train Number")
         train.grid(row=1, column=0)
-        trainEntry = Label(self.viewReviewWin)
+        self.trainNo = StringVar()
+        self.trainNo.set("")
+        trainEntry = Entry(self.viewReviewWin, textvariable=self.trainNo)
         trainEntry.grid(row=1, column=1)
         back = Button(self.viewReviewWin, text="Back", command=self.viewToHome)
         back.grid(row=2, column=0)
@@ -820,12 +934,9 @@ class gtTrains:
         self.customerHome()
         
     def submitSchoolInfo(self):
-        ## need it to throw an error when the email is not valid
-        ## after it is successful
-        
         self.connect()
         cursor = self.connect().cursor()
-        sql = "UPDATE Customers SET Customers.Student= 'yes' WHERE Customers.Username = %s AND %s LIKE '%%@%%.edu'"
+        sql = "UPDATE Customers SET Customers.Student= '1' WHERE Customers.Username = %s AND %s LIKE '%%@%%.edu'"
         school = self.schoolStr.get()
         cursor.execute(sql, (self.user,school))
         sql = "SELECT Customers.Username FROM Customers WHERE Customers.Username = %s AND Customers.Student = 'yes'"
@@ -836,6 +947,7 @@ class gtTrains:
             messagebox.showinfo("Student Discount", "Student Discount Applied")
             self.addSchoolWin.withdraw()
             self.customerHome()
+            
     def logOut(self):
         self.custHomeWin.withdraw()
         self.loginWin.deiconify()
