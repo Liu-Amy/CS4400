@@ -150,7 +150,7 @@ VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
 
 // Figure 13: Update reservation 2
 // Returns number of tickets there are in a reservation
-// Status: Nope
+// Status: Works
 // %s = ReservationID
 SELECT COUNT(*)
 FROM Reservations
@@ -196,8 +196,29 @@ WHERE ReservationDetails.ReservationID = %s
   TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) > "00:00:00"
 
 // Figure 14: Update reservation 3
+UPDATE ReservationDetails
+SET DepartureTime = %s
+WHERE ReservationID = %s AND TrainNumber = %
+
+// Figure 14: Update reservation 3 - shows the Change Fee
+SELECT ChangeFee
+FROM SystemInfo
+
+// Figure 14: Update reservation 3
+UPDATE Reservations
+SET TotalCost = TotalCost + 50
+WHERE ReservationID = %s
 
 // Figure 15: Cancel reservation
+UPDATE Reservations
+SET Status = 0
+WHERE ReservationID = %s
+
+// Figure 15: Cancel reservation
+// Shows TotalCost of reservation
+SELECT TotalCost
+FROM Reservations
+WHERE ReservationID = %s
 
 // Figure 16: View review
 SELECT Rating, Comment
