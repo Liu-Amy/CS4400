@@ -34,6 +34,11 @@ SELECT *
 FROM Customers
 WHERE Email = %s
 
+// Valid email or nah
+SELECT *
+FROM Customers
+WHERE %s LIKE '&&@%%.%%'
+
 // Figure 4: Add school info
 // Status: Works
 UPDATE Customers
@@ -78,7 +83,7 @@ FROM SystemInfo
 
 // Figure 8: Make reservation 1 use card dropdown
 // Status: Works
-SELECT CardNumber
+SELECT Right(CardNumber, 4)
 FROM PaymentInfo
 WHERE Username = %s
 
@@ -101,7 +106,7 @@ WHERE PaymentInfo.CardNumber = %s AND PaymentInfo.Username = %s
 
 // Figure 10: Payment info - Find Card to Delete dropdown
 // Status: Works
-SELECT CardNumber
+SELECT Right(CardNumber, 4)
 FROM PaymentInfo
 WHERE Username = %s
 
@@ -130,7 +135,7 @@ FROM SystemInfo
 // Status: Nope (SHOULD WORK WITH AUTOINCREMENT???)
 // Add to Reservations - IF CUSTOMER IS A STUDENT
 // Next ReservationID is generated using auto-increment
-// VALUES (%s, %s, 1, (PriceOfTicker + NumBagsOverTwo*30)*0.08)
+// VALUES (%s, %s, 1, (PriceOfTicket + NumBagsOverTwo*30)*0.8)
 INSERT INTO Reservations(Username, CardNumber, Status, TotalCost)
 VALUES (%s, %s, 1, ((%s + %s*30)*0.08))
 
@@ -138,7 +143,7 @@ VALUES (%s, %s, 1, ((%s + %s*30)*0.08))
 // Status: Nope (SHOULD WORK WITH AUTOINCREMENT???)
 // Add to Reservations - IF CUSTOMER IS NOT A STUDENT
 // Next ReservationID is generated using auto-increment
-// VALUES (%s, %s, 1, (PriceOfTicker + NumBagsOverTwo*30))
+// VALUES (%s, %s, 1, (PriceOfTicket + NumBagsOverTwo*30))
 INSERT INTO Reservations(Username, CardNumber, Status, TotalCost)
 VALUES (%s, %s, 1, ((%s + %s*30)))
 
