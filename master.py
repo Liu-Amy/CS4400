@@ -551,7 +551,7 @@ class gtTrains:
     
     def payInfo(self):
         cursor = self.connect().cursor()
-        self.makeReservation.withdraw()
+        self.makeResWin.withdraw()
         self.payWin=Toplevel()
         self.payWin.title("Payment Information")
         title=Label(self.payWin, text="Payment Information", font="Arial 20")
