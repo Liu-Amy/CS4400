@@ -193,32 +193,92 @@ WHERE ReservationDetails.ReservationID = %s
   Reservations.Username = %s AND
   DepartureStop.StationName = %s AND
   ArrivalStop.StationName = %s AND
+  Reservations.Status = 2 AND
   TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) > "00:00:00"
 
 // Figure 14: Update reservation 3
+// Status: Nope
 UPDATE ReservationDetails
+INNER JOIN Reservations ON Reservations.ReservationID = ReservationDetails.ReservationID
 SET DepartureTime = %s
-WHERE ReservationID = %s AND TrainNumber = %
+WHERE ReservationID = %s AND TrainNumber = % AND Reservations.Status = 1
 
 // Figure 14: Update reservation 3 - shows the Change Fee
+// Status: Nope
 SELECT ChangeFee
 FROM SystemInfo
 
 // Figure 14: Update reservation 3
+// Status: Nope
 UPDATE Reservations
 SET TotalCost = TotalCost + 50
-WHERE ReservationID = %s
+WHERE ReservationID = %s AND Username = %s AND Status = 1
+
+// Figure 15: Cancel reservation - Show table
+// Status: Works
+SELECT TrainRoutes.TrainNumber,
+  CONCAT(ReservationDetails.DepartureDate, " " , DepartureStop.DepartureTime," - ", ArrivalStop.ArrivalTime, "\n",
+    TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime)) as Time,
+  CONCAT(DepartureStation.Location, "(", DepartureStation.StationName, ")") as DepartsFrom,
+  CONCAT(ArrivalStation.Location, "(", ArrivalStation.StationName, ")") as ArrivesAt,
+  TrainRoutes.FirstClassPrice,
+  TrainRoutes.SecondClassPrice,
+  ReservationDetails.Baggage,
+  ReservationDetails.PassengerName
+FROM TrainRoutes
+INNER JOIN ReservationDetails on TrainRoutes.TrainNumber = ReservationDetails.TrainNumber
+INNER JOIN Reservations on ReservationDetails.ReservationID = Reservations.ReservationID
+INNER JOIN Stops as ArrivalStop on TrainRoutes.TrainNumber = ArrivalStop.TrainNumber
+INNER JOIN Stops as DepartureStop on TrainRoutes.TrainNumber = DepartureStop.TrainNumber
+INNER JOIN Stations as ArrivalStation on ArrivalStop.StationName = ArrivalStation.StationName
+INNER JOIN Stations as DepartureStation on DepartureStop.StationName = DepartureStation.StationName
+WHERE ReservationDetails.ReservationID = %s
+  Reservations.Username = %s AND
+  DepartureStop.StationName = %s AND
+  ArrivalStop.StationName = %s AND
+  Reservations.Status = 1
+  TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) > "00:00:00"
+
+// Figure 15: Cancel reservation - Date difference
+// Negative value means DepartureDate has passed
+// Status: Works
+SELECT MIN(ReservationDetails.DepartureDate),
+  DATE(NOW()),
+  DATEDIFF(MIN(ReservationDetails.DepartureDate), DATE(NOW()))
+FROM ReservationDetails
+INNER JOIN Reservations ON ReservationDetails.ReservationID = Reservations.ReservationID
+WHERE ReservationDetails.ReservationID = %s AND
+  Reservations.Username = %s AND Status = 1
 
 // Figure 15: Cancel reservation
-UPDATE Reservations
-SET Status = 0
-WHERE ReservationID = %s
-
-// Figure 15: Cancel reservation
-// Shows TotalCost of reservation
+// TotalCost of reservation
+// Status: Works
 SELECT TotalCost
 FROM Reservations
-WHERE ReservationID = %s
+WHERE ReservationID = %s AND Username = %s AND Status = 1
+
+// Figure 15: Cancel reservation
+// Calculate Amount to be refunded for over 7 day difference
+// NEED TO CHECK IF TOTALCOST IS 0 BEFORE ADDING TO THE DATABASE!
+// Status: Works
+UPDATE Reservations
+SET TotalCost = (%s * .8) -50
+WHERE Reservations.ReservationID = %s AND Reservations.Username = %s AND Status = 1
+
+// Figure 15: Cancel reservation
+// Calculate Amount to be refunded for more than 1 day but less than 7 day difference
+// NEED TO CHECK IF TOTALCOST IS 0 BEFORE ADDING TO THE DATABASE!
+// Status: Works
+UPDATE Reservations
+SET TotalCost = (%s * .5) -50
+WHERE Reservations.ReservationID = %s AND Reservations.Username = %s AND Status = 1
+
+// Figure 15: Cancel reservation
+// Status: Nope
+UPDATE Reservations
+SET Status = 0
+WHERE ReservationID = %s AND Username = %s AND Status = 1;
+
 
 // Figure 16: View review
 SELECT Rating, Comment
