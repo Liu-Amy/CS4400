@@ -4,7 +4,6 @@
 # Amy Liu - Section C - aliu66@gatech.edu
 
 from tkinter import *
-import urllib.request
 import datetime
 import pymysql
 import time
@@ -97,7 +96,7 @@ class gtTrains:
     def registerPage(self):
         ## window setup
         self.registerWin = Toplevel()
-        self.registerWin.title("GT Brokers Register Page")
+        self.registerWin.title("GT Trains Register Page")
         ## main frame setup
         self.topRegister = Frame(self.registerWin)
         self.topRegister.grid(row = 0, column = 0, pady = 40)
@@ -472,7 +471,7 @@ class gtTrains:
             currentselect.grid(row=1, column=0, padx=20)
             table = Frame(self.makeResWin)
             table.grid(row=2, column=0, columnspan=200, pady=20, padx=20)
-            hList = ["Train\n(Train Number)", "Time\n(Duration)", "Departs From", "Arrives At", "Class", "Price", "# of Baggage(s)", "Passenger Name", "Remove"]
+            hList = ["Train\n(Train Number)", "Time\n(Duration)", "Departs From", "Arrives At", "Class", "Price", "Passenger Name", "# of Baggage", "Remove"]
             for i in range(len(hList)):
                 header = Label(table, text = hList[i])
                 header.grid(row = 0, column = i)
@@ -506,6 +505,7 @@ class gtTrains:
                 totalCost = totalCost*0.8
             self.tcV = StringVar()
             self.tcV.set("$" + str(totalCost))
+            self.tc = totalCost
             tcE = Entry(self.makeResWin, textvariable = self.tcV, state="readonly")
             tcE.grid(row=4, column=1)
             uc = Label(self.makeResWin, text="Use Card")
@@ -646,24 +646,44 @@ class gtTrains:
         self.passengerInfoWin.deiconify()
         
     def submitRes(self):
-        ## does the GUI generate reservationID or does the sql do that??
-        ## display reservation ID
-        ## insert into database
-        ## commit changes to database
-        #
-        #
-        #
-        #
-        #
+        cardNo = self.payWith.get()
+        totalCost = self.tc
+        cursor = self.connect().cursor()
+        sql = "SELECT COUNT(*) FROM Reservations"
+        cursor.execute(sql)
+        count = cursor.fetchall()
+        resID = count[0][0] + 1
+        sql = "SELECT CardNumber FROM PaymentInfo WHERE Right(CardNumber, 4) = %s AND Username = %s"
+        cursor.execute(sql, (cardNo, self.user))
+        raw = cursor.fetchall()
+        fullcardNo = raw[0][0]
+        sql = "INSERT INTO Reservations (ReservationID, Username, CardNumber, Status, TotalCost) VALUES (%s, %s, %s, %s, %s)"
+        cursor.execute(sql, (resID, self.user, fullcardNo, '1', totalCost))
+        date = self.departdate
+        for res in self.resList:
+            sql = "INSERT INTO ReservationDetails (ReservationID, TrainNumber, PassengerName, Baggage, Class, DepartsFrom, ArrivesAt, DepartureDate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            split = res[2].split("(")
+            departs = split[0]
+            split2 = res[3].split("(")
+            arrives = split2[0]
+            if res[4] == "1st Class":
+                classs = "First Class"
+            else:
+                classs = "Second Class"
+            cursor.execute(sql, (resID, res[0], res[6], res[7], classs, departs, arrives, date))
+        cursor.close()
+        self.connect().commit()
         self.makeResWin.withdraw()
         self.startRes = True
         self.confirmWin = Toplevel()
         self.confirmWin.title("Confirmation")
         title = Label(self.confirmWin, text="Confirmation", font="Arial 20")
         title.grid(row = 0, column = 0, columnspan = 2)
-        res = Label(self.confirmWin, text="Reservation ID")
+        res = Label(self.confirmWin, text= "Reservation ID")
         res.grid(row = 1, column=0)
-        resEntry = Entry(self.confirmWin, state="readonly")
+        self.resID = StringVar()
+        self.resID.set(resID)
+        resEntry = Entry(self.confirmWin, textvariable = self.resID, state="readonly")
         resEntry.grid(row = 1, column=1)
         d = Label(self.confirmWin, text="Thank you for your purchase! Please save reservation ID for your records.")
         d.grid(row=2, column=0, columnspan=2)
