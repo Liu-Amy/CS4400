@@ -231,46 +231,46 @@ VALUES (%s, %s, %s, %s, %s)
 
 // Figure 19: Manager - View revenue report
 // Call it three times for the most recent three monthes
-SELECT SUM(Reservations.TotalCost)
+SELECT MONTH(NOW()), SUM(Reservations.TotalCost)
 FROM Reservations
 WHERE Reservations.ReservationID in (
   SELECT ReservationID
   FROM ReservationDetails
-  WHERE MONTH(DepartureDate) = %s
+  WHERE MONTH(DepartureDate) = MONTH(NOW())
 )
 UNION
-SELECT SUM(Reservations.TotalCost)
+SELECT MONTH(NOW())-1, SUM(Reservations.TotalCost)
 FROM Reservations
 WHERE Reservations.ReservationID in (
   SELECT ReservationID
   FROM ReservationDetails
-  WHERE MONTH(DepartureDate) = %s
+  WHERE MONTH(DepartureDate) = MONTH(NOW()) - 1
 )
 UNION
-SELECT SUM(Reservations.TotalCost)
+SELECT MONTH(NOW())-2, SUM(Reservations.TotalCost)
 FROM Reservations
 WHERE Reservations.ReservationID in (
   SELECT ReservationID
   FROM ReservationDetails
-  WHERE MONTH(DepartureDate) = %s
+  WHERE MONTH(DepartureDate) = MONTH(NOW())-2
 )
 
 // Las figure: Manager - View popular route report
-SELECT MONTH(DepartureDate) AS Month, TrainNumber AS Train, COUNT(TrainNumber) AS Num
+SELECT MONTH(NOW()) AS Month, TrainNumber AS Train, COUNT(TrainNumber) AS Num
 FROM ReservationDetails
 INNER JOIN Reservations ON ReservationDetails.ReservationID = Reservations.ReservationID
-WHERE MONTH(DepartureDate) = %s
+WHERE MONTH(DepartureDate) = MONTH(NOW())
 GROUP BY Month
 UNION
-SELECT MONTH(DepartureDate) AS Month, TrainNumber AS Train, COUNT(TrainNumber) AS Num
+SELECT MONTH(NOW())-1 AS Month, TrainNumber AS Train, COUNT(TrainNumber) AS Num
 FROM ReservationDetails
 INNER JOIN Reservations ON ReservationDetails.ReservationID = Reservations.ReservationID
-WHERE MONTH(DepartureDate) = %s
+WHERE MONTH(DepartureDate) = MONTH(NOW())-1
 GROUP BY Month
 UNION
-SELECT MONTH(DepartureDate) AS Month, TrainNumber AS Train, COUNT(TrainNumber) AS Num
+SELECT MONTH(NOW())-2 AS Month, TrainNumber AS Train, COUNT(TrainNumber) AS Num
 FROM ReservationDetails
 INNER JOIN Reservations ON ReservationDetails.ReservationID = Reservations.ReservationID
-WHERE MONTH(DepartureDate) = %s
+WHERE MONTH(DepartureDate) = MONTH(NOW())-2
 GROUP BY Month
 ORDER BY Month ASC, Num DESC
