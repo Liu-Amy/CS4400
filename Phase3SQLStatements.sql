@@ -111,19 +111,14 @@ FROM PaymentInfo
 WHERE Username = %s
 
 // Figure 10: Payment info  Delete Card
-// Status: Nope
+// Status: Works
 DELETE PaymentInfo
 FROM PaymentInfo
 INNER JOIN Customers ON PaymentInfo.Username = Customers.Username
-INNER JOIN Reservations ON PaymentInfo.CardNummber = Reservations.CardNummber
-WHERE Customers = %s AND
-  Reservations.Status = 0; --0 bit means the reservation was canceled
--- DELETE PaymentInfo.*
--- FROM PaymentInfo
--- INNER JOIN Customers ON PaymentInfo.Username = Customers.Username
--- INNER JOIN Reservations ON PaymentInfo.CardNumber = Reservations.CardNumber
--- WHERE Customers.Username = "aliu3" AND
---   Reservations.Status = 0
+INNER JOIN Reservations ON PaymentInfo.CardNumber = Reservations.CardNumber
+WHERE Customers.Username = %s AND
+  Reservations.Status = 0 AND
+  PaymentInfo.CardNumber = %s
 
 // Figure 11: Confirmation screen
 // Status: Works
