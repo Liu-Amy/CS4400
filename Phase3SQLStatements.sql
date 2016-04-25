@@ -191,14 +191,19 @@ SELECT TrainRoutes.TrainNumber,
   ReservationDetails.Baggage,
   ReservationDetails.PassengerName
 FROM TrainRoutes
-INNER JOIN ReservationDetails on TrainRoutes.TrainNumber = ReservationDetails.TrainNumber
-INNER JOIN Reservations on ReservationDetails.ReservationID = Reservations.ReservationID
 INNER JOIN Stops as ArrivalStop on TrainRoutes.TrainNumber = ArrivalStop.TrainNumber
 INNER JOIN Stops as DepartureStop on TrainRoutes.TrainNumber = DepartureStop.TrainNumber
 INNER JOIN Stations as ArrivalStation on ArrivalStop.StationName = ArrivalStation.StationName
 INNER JOIN Stations as DepartureStation on DepartureStop.StationName = DepartureStation.StationName
-WHERE ReservationDetails.ReservationID = %s AND
-  ReservationDetails.TrainNumber = %s AND
+INNER JOIN ReservationDetails on TrainRoutes.TrainNumber = ReservationDetails.TrainNumber
+INNER JOIN Reservations on ReservationDetails.ReservationID = Reservations.ReservationID
+WHERE ReservationDetails.ReservationID = 0 AND
+  Reservations.ReservationID = ReservationDetails.ReservationID AND
+  TrainRoutes.TrainNumber = %s AND
+  ReservationDetails.TrainNumber =   TrainRoutes.TrainNumber AND
+  ArrivalStop.TrainNumber =   TrainRoutes.TrainNumber AND
+  DepartureStop.TrainNumber =   TrainRoutes.TrainNumber AND
+  ArrivalStop.TrainNumber =   DepartureStop.TrainNumber AND
   Reservations.Username = %s AND
   DepartureStop.StationName = %s AND
   ArrivalStop.StationName = %s AND
@@ -218,9 +223,14 @@ SELECT ChangeFee
 FROM SystemInfo
 
 // Figure 14: Update reservation 3
+SELECT TotalCost
+FROM Reservations
+WHERE ReservationID = %s AND Username = %s AND Status = 1
+
+// Figure 14: Update reservation 3
 // Status: Nope
 UPDATE Reservations
-SET TotalCost = TotalCost + 50
+SET TotalCost = %s + 50
 WHERE ReservationID = %s AND Username = %s AND Status = 1
 
 // Figure 15: Cancel reservation - Show table
@@ -236,14 +246,19 @@ SELECT TrainRoutes.TrainNumber,
   ReservationDetails.Baggage,
   ReservationDetails.PassengerName
 FROM TrainRoutes
-INNER JOIN ReservationDetails on TrainRoutes.TrainNumber = ReservationDetails.TrainNumber
-INNER JOIN Reservations on ReservationDetails.ReservationID = Reservations.ReservationID
 INNER JOIN Stops as ArrivalStop on TrainRoutes.TrainNumber = ArrivalStop.TrainNumber
 INNER JOIN Stops as DepartureStop on TrainRoutes.TrainNumber = DepartureStop.TrainNumber
 INNER JOIN Stations as ArrivalStation on ArrivalStop.StationName = ArrivalStation.StationName
 INNER JOIN Stations as DepartureStation on DepartureStop.StationName = DepartureStation.StationName
-WHERE ReservationDetails.ReservationID = %s AND
-  ReservationDetails.TrainNumber = %s AND
+INNER JOIN ReservationDetails on TrainRoutes.TrainNumber = ReservationDetails.TrainNumber
+INNER JOIN Reservations on ReservationDetails.ReservationID = Reservations.ReservationID
+WHERE ReservationDetails.ReservationID = 0 AND
+  Reservations.ReservationID = ReservationDetails.ReservationID AND
+  TrainRoutes.TrainNumber = %s AND
+  ReservationDetails.TrainNumber =   TrainRoutes.TrainNumber AND
+  ArrivalStop.TrainNumber =   TrainRoutes.TrainNumber AND
+  DepartureStop.TrainNumber =   TrainRoutes.TrainNumber AND
+  ArrivalStop.TrainNumber =   DepartureStop.TrainNumber AND
   Reservations.Username = %s AND
   DepartureStop.StationName = %s AND
   ArrivalStop.StationName = %s AND
@@ -331,17 +346,17 @@ SELECT MONTH(NOW()) AS Month, TrainNumber AS Train, COUNT(TrainNumber) AS Num
 FROM ReservationDetails
 INNER JOIN Reservations ON ReservationDetails.ReservationID = Reservations.ReservationID
 WHERE MONTH(DepartureDate) = MONTH(NOW())
-GROUP BY Month
+GROUP BY ReservationDetails.TrainNumber
 UNION
 SELECT MONTH(NOW())-1 AS Month, TrainNumber AS Train, COUNT(TrainNumber) AS Num
 FROM ReservationDetails
 INNER JOIN Reservations ON ReservationDetails.ReservationID = Reservations.ReservationID
 WHERE MONTH(DepartureDate) = MONTH(NOW())-1
-GROUP BY Month
+GROUP BY ReservationDetails.TrainNumber
 UNION
 SELECT MONTH(NOW())-2 AS Month, TrainNumber AS Train, COUNT(TrainNumber) AS Num
 FROM ReservationDetails
 INNER JOIN Reservations ON ReservationDetails.ReservationID = Reservations.ReservationID
 WHERE MONTH(DepartureDate) = MONTH(NOW())-2
-GROUP BY Month
+GROUP BY ReservationDetails.TrainNumber
 ORDER BY Month ASC, Num DESC
