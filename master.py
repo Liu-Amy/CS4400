@@ -339,8 +339,8 @@ class gtTrains:
                 messagebox.showerror("Error", "No routes available")
             elif self.departdate == datetime.date.today():
                 messagebox.showerror("Error", "This is today's date")
-            #elif self.departdate < datetime.date.today():
-             #   messagebox.showerror("Error", "This date is in the past")
+            elif self.departdate < datetime.date.today():
+                messagebox.showerror("Error", "This date is in the past")
             elif self.departdate > datetime.datetime.strptime("05/31/2016", "%m/%d/%Y").date():
                 messagebox.showerror("Error", "Too far in the future. No routes available")
             else:
@@ -929,65 +929,127 @@ class gtTrains:
         self.customerHome()
         
     def cancelRes(self):
-        # sql statement for list
-        # populate the table
-        # import total cost
-        # import amount to be refunded
-        ### 80% of total cost refunded if cancelled 7 days earlier
-        # than the earliest departure date
-        ### 50% refunded if cancelled more than 1 day earlier but less than 7 days earlier
-        # $50 cancellation fee, deducted from refund
-        ### cannot cancel a cancelled reservation
-        # commit changes
-        # refund can't be negatiive
-        #  CANCELLATION DATE
-        # self.resID.get()
-        #
-        #self.cancelResIDWin.withdraw()
-        self.cancelResWin = Toplevel()
-        self.cancelResWin.title("Cancel Reservation")
-        title = Label(self.cancelResWin, text="Cancel Reservation", font="Arial 20")
-        title.grid(row=0,column=0, columnspan=100)
-        table = Frame(self.cancelResWin)
-        table.grid(row=1, column=0, columnspan=100, pady=20, padx=20)
-        hList = ["Train\n(Train Number)", "Time\n(Duration)", "Departs From", "Arrives At", "Class", "Price", "# of Baggage(s)", "Passenger Name"]
-        for i in range(len(hList)):
-            header = Label(table, text = hList[i])
-            header.grid(row = 0, column = i)
-        aFrame = Frame(self.cancelResWin)
-        aFrame.grid(row=2, column=0, pady=10, padx=20, sticky=W)
-        acList = ["Total Cost of Reservation", "Date of Cancellation", "Amount to be Refunded"]
-        for i in range(len(acList)):
-            header = Label(aFrame, text = acList[i])
-            header.grid(row = i, column = 0)
-        tc = Entry(aFrame, state="readonly")
-        tc.grid(row=0, column=1)
-        currentTime = datetime.date.today().strftime("%m/%d/%Y")
-        date = StringVar()
-        date.set(currentTime)
-        dc = Entry(aFrame, textvariable=date, state="readonly")
-        dc.grid(row=1, column=1)
-        ar = Entry(aFrame, state="readonly")
-        ar.grid(row=2, column=1)
-        back = Button(self.cancelResWin, text="Back", command=self.cancelBack)
-        back.grid(row=3, column=0)
-        sbt = Button(self.cancelResWin, text="Submit", command=self.cancelSubmit)
-        sbt.grid(row=3, column=1)
+        resnum = self.resID.get()
+        yes = True
+        self.resnum = resnum
+        cursor = self.connect().cursor()
+        sql = "SELECT * FROM ReservationDetails WHERE ReservationID = %s"
+        count = cursor.execute(sql, resnum)
+        raw = cursor.fetchall()
+        self.sqlList = []
+        for x in raw:
+            self.sqlList.append(x[1:])
+        if count == 0:
+            messagebox.showerror("Error", "No such reservation exists")
+            yes = False
+        sql = "SELECT * FROM Reservations WHERE Username = %s AND ReservationID=%s"
+        check = cursor.execute(sql,(self.user, resnum))
+        if check == 0:
+            messagebox.showerror("Error", "This reservation does not belong to you.")
+            yes = False
+        sql = "SELECT Status FROM Reservations WHERE ReservationID = %s"
+        cursor.execute(sql, resnum)
+        raw = cursor.fetchall()
+        cancelled = raw[0][0]
+        if cancelled == '0':
+            messagebox.showerror("Error", "You cannot cancel a cancelled reservation")
+            yes = False
+        self.resInfo = []
+        if yes==True:
+            for entry in self.sqlList:
+                sql = "SELECT TrainRoutes.TrainNumber, CONCAT(DepartureStop.DepartureTime,' - ', ArrivalStop.ArrivalTime, '\n', TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime)), DepartureStop.DepartureTime, ArrivalStop.ArrivalTime, TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) as Duration, TrainRoutes.FirstClassPrice, TrainRoutes.SecondClassPrice FROM TrainRoutes INNER JOIN Stops as ArrivalStop ON TrainRoutes.TrainNumber = ArrivalStop.TrainNumber INNER JOIN Stops as DepartureStop ON TrainRoutes.TrainNumber = DepartureStop.TrainNumber WHERE DepartureStop.StationName = %s AND ArrivalStop.StationName = %s AND TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) > '00:00:00'"
+                cursor.execute(sql, (entry[5], entry[6]))
+                raw = cursor.fetchall()
+                for x in range(len(raw)):
+                    if raw[x][0] == entry[0]:
+                        self.resInfo.append(raw[x])
+            self.masterList = []
+            self.dateList = []
+            for x in range(len(self.resInfo)):
+                oneRes = []
+                oneRes.append(self.sqlList[x][0])
+                date = self.sqlList[x][4]
+                self.dateList.append(date)
+                fixedDate = date.strftime("%b %d")
+                oneRes.append(fixedDate + ' ' + self.resInfo[x][1].decode("utf-8"))
+                oneRes.append(self.sqlList[x][5])
+                oneRes.append(self.sqlList[x][6])
+                oneRes.append(self.sqlList[x][3])
+                if self.sqlList[x][3] == "First Class":
+                    price = self.resInfo[x][5]
+                else:
+                    price = self.resInfo[x][6]
+                oneRes.append(price)
+                oneRes.append(self.sqlList[x][2])
+                oneRes.append(self.sqlList[x][1])
+                self.masterList.append(oneRes)
+            self.cancelResIDWin.withdraw()
+            self.cancelResWin = Toplevel()
+            self.cancelResWin.title("Cancel Reservation")
+            title = Label(self.cancelResWin, text="Cancel Reservation", font="Arial 20")
+            title.grid(row=0,column=0, columnspan=100)
+            table = Frame(self.cancelResWin)
+            table.grid(row=1, column=0, columnspan=100, pady=20, padx=20)
+            hList = ["Train\n(Train Number)", "Time\n(Duration)", "Departs From", "Arrives At", "Class", "Price", "# of Baggage", "Passenger Name"]
+            for i in range(len(hList)):
+                header = Label(table, text = hList[i])
+                header.grid(row = 0, column = i)
+            for i in range(len(self.masterList)):
+                for j in range(len(self.masterList[0])):
+                    l = Label(table, text=self.masterList[i][j])
+                    l.grid(row = i +1, column = j)                    
+            aFrame = Frame(self.cancelResWin)
+            aFrame.grid(row=2, column=0, pady=10, padx=20, sticky=W)
+            acList = ["Total Cost of Reservation", "Date of Cancellation", "Amount to be Refunded"]
+            for i in range(len(acList)):
+                header = Label(aFrame, text = acList[i])
+                header.grid(row = i, column = 0)
+            cursor = self.connect().cursor()
+            sql = "SELECT TotalCost FROM Reservations WHERE ReservationID = %s"
+            cursor.execute(sql, self.resnum)
+            raw = cursor.fetchall()
+            newcost = raw[0][0] 
+            totalcost = StringVar()
+            totalcost.set(newcost)
+            tc = Entry(aFrame, textvariable = totalcost, state="readonly")
+            tc.grid(row=0, column=1)
+            currentTime = datetime.date.today().strftime("%m/%d/%Y")
+            date = StringVar()
+            date.set(currentTime)
+            dc = Entry(aFrame, textvariable=date, state="readonly")
+            dc.grid(row=1, column=1)
+            thedate = self.dateList[0]
+            today = datetime.date.today()
+            delta7 = thedate - datetime.timedelta(7)
+            delta1 = thedate - datetime.timedelta(1)
+            if today == delta1:
+                messagebox.showerror("Error", "It's too late to cancel this reservation")
+            if today >= delta7:
+                c = 0.8
+            if today < delta7:
+                c = 0.5
+            cost = StringVar()
+            self.changedcost = newcost*c - 50
+            cost.set(self.changedcost)
+            ar = Entry(aFrame, textvariable = cost, state="readonly")
+            ar.grid(row=2, column=1)
+            back = Button(self.cancelResWin, text="Back", command=self.cancelBack)
+            back.grid(row=3, column=0)
+            sbt = Button(self.cancelResWin, text="Apply", command=self.cancelSubmit)
+            sbt.grid(row=3, column=1)
         
     def cancelBack(self):
         self.cancelResWin.withdraw()
         self.cancelReservation()
         
     def cancelSubmit(self):
-        ## make the thing happen in the database
-        ## recalculate total cost and update it
-        ##
-        ##
-        ##
-        ##
-        ##
-        self.cancelResWin.withdraw()
-        #sql changes
+        cursor = self.connect().cursor()
+        sql = "UPDATE Reservations SET Status = '0' WHERE ReservationID = %s"
+        cursor.execute(sql, self.resnum)
+        sql = "UPDATE Reservations SET TotalCost = %s WHERE ReservationID = %s"
+        cursor.execute(sql, (self.changedcost, self.resnum))
+        cursor.close()
+        self.connect().commit()
         self.customerHome()
         
     def viewReview(self):
