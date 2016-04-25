@@ -51,17 +51,14 @@ class gtTrains:
         login = Button(self.loginframe, text = "Login", command = self.loginCheck)
         login.grid(row = 0, column = 1, sticky = E, ipadx = 10)
 
-        
     def connect(self):
         ## connect to database
         try:
-            self.db = pymysql.connect(host = "academic-mysql.cc.gatech.edu",
-                                 passwd = 'zMRDk9FA', user = 'cs4400_Team_29', db = 'cs4400_Team_29')
+            self.db = pymysql.connect(host = "academic-mysql.cc.gatech.edu", passwd = 'zMRDk9FA', user = 'cs4400_Team_29', db = 'cs4400_Team_29')
             return self.db
         except:
             messagebox.showerror("Error", "Check your internet connection")
 
-            
     def loginCheck(self):
         ## connect to database
         self.connect()
@@ -75,9 +72,9 @@ class gtTrains:
         if check == 1:
             messagebox.showinfo("Login", "Login Successful!")
             self.startRes = True
-            sql = "SELECT * FROM Managers WHERE Username = %s"
+            sql="SELECT * FROM Managers WHERE Username = %s"
             cursor.execute(sql, self.user)
-            if cursor.rowcount == 1:
+            if cursor.rowcount==1:
                 cursor.close()
                 self.loginWin.withdraw()
                 self.managerHome()
@@ -103,30 +100,26 @@ class gtTrains:
         ## row 0 - label
         titleLabel = Label(self.topRegister, text = "New User Registration", font = ("Arial", 20))
         titleLabel.grid(row = 0, column = 0, columnspan=2, sticky = N+W+S+E, pady = 15)
+        hlist = ["Username:", "Email Address:", "Password:", "Confirm Password:"]
+        for i in range(len(hlist)):
+            l = Label(self.topRegister, text=hlist[i])
+            l.grid(row=i+1, column=0, sticky=E, padx=5)
         ## row 0 - username
-        userLabel = Label(self.topRegister, text = "Username:")
-        userLabel.grid(row = 1, column = 0, sticky = E, padx = 5)
         self.userStr = StringVar()
         self.userStr.set("")
         userEntry = Entry(self.topRegister, textvariable = self.userStr, width = 60)
         userEntry.grid(row = 1, column = 1, padx = 5)
         ## row 1 - email address
-        nameLabel = Label(self.topRegister, text = "Email Address:")
-        nameLabel.grid(row = 2, column = 0, sticky = E, padx = 5)
         self.emailStr = StringVar()
         self.emailStr.set("")
         nameEntry = Entry(self.topRegister, textvariable = self.emailStr, width = 60)
         nameEntry.grid(row = 2, column = 1, padx = 5)
         ## row 2 - password
-        passLabel = Label(self.topRegister, text = "Password:")
-        passLabel.grid(row = 3, column = 0, sticky = E, padx = 5)
         self.passStr = StringVar()
         self.passStr.set("")
         passEntry = Entry(self.topRegister, textvariable = self.passStr, width = 60)
         passEntry.grid(row = 3, column = 1, padx = 5)
         ## row 3 - confirm password
-        confirmLabel = Label(self.topRegister, text = "Confirm Password:")
-        confirmLabel.grid(row = 4, column = 0, sticky = E, padx = 5)
         self.confirmStr = StringVar()
         self.confirmStr.set("")
         confirmEntry = Entry(self.topRegister, textvariable = self.confirmStr, width = 60)
@@ -177,7 +170,7 @@ class gtTrains:
             sql = "INSERT INTO Users (Username, Password) VALUES (%s, %s)"
             cursor.execute(sql,(userStr, passStr))
             sql = "INSERT INTO Customers (Username, Email, Student) VALUES (%s, %s, %s)"
-            cursor.execute(sql,(userStr, emailStr, '0'))
+            cursor.execute(sql,(userStr, emailStr, 'no'))
             #closing stuff after a successful registration
             cursor.close()
             self.connect().commit()
@@ -186,7 +179,6 @@ class gtTrains:
     
     def customerHome(self):
         ## window set up
-        self.loginWin.withdraw()
         self.custHomeWin = Toplevel()
         self.custHomeWin.title("Choose Functionality")
         chooseLabel = Label(self.custHomeWin, text = "Choose Functionality", font = "Arial 20", pady = 20, padx = 30)
@@ -268,12 +260,9 @@ class gtTrains:
                 trainSchedList.append(record)
             schedLen = len(trainSchedList)
             for i in range(schedLen):
-                arrival = Label(z, text = trainSchedList[i][0], width = 15)
-                arrival.grid(row = i+1, column = 1, sticky=W+E+N+S)
-                departure = Label(z, text = trainSchedList[i][1], width = 15)
-                departure.grid(row = i+1, column = 2, sticky=W+E+N+S)
-                stationName = Label(z, text = trainSchedList[i][2], width = 15)
-                stationName.grid(row = i+1, column = 3, sticky=W+E+N+S)
+                for j in range(3):
+                    lbls = Label(z, text=trainSchedList[i][j], width=15)
+                    lbls.grid(row=i+1, column=j+1)
             sql="SELECT DISTINCT TrainNumber FROM Stops WHERE TrainNumber=%s"
             cursor.execute(sql, self.trainString)
             for record in cursor:
@@ -310,20 +299,18 @@ class gtTrains:
         title.grid(row=0, column=0)
         mframe = Frame(self.trainSearchWin)
         mframe.grid(row=1,column=0)
-        dlabel = Label(mframe, text = "Departs From")
-        dlabel.grid(row=0, column=0)
+        hlist=["Departs From", "Arrives At", "Departure Date"]
+        for i in range(len(hlist)):
+            lbl = Label(mframe, text=hlist[i])
+            lbl.grid(row=i, column=0)
         self.departVar = StringVar(mframe)
         self.departVar.set(stationList[0])
         self.arriveVar = StringVar(mframe)
         self.arriveVar.set(stationList[1])
         doption = OptionMenu(mframe, self.departVar, *stationList)
         doption.grid(row=0, column=1)
-        alabel = Label(mframe, text = "Arrives At")
-        alabel.grid(row=1,column=0)
         aoption = OptionMenu(mframe, self.arriveVar, *stationList)
         aoption.grid(row=1,column=1)
-        ddlabel = Label(mframe, text = "Departure Date")
-        ddlabel.grid(row=2, column=0)
         currentTime = datetime.date.today().strftime("%m/%d/%Y")
         self.date = StringVar(mframe)
         self.date.set(currentTime)
@@ -352,8 +339,8 @@ class gtTrains:
                 messagebox.showerror("Error", "No routes available")
             elif self.departdate == datetime.date.today():
                 messagebox.showerror("Error", "This is today's date")
-            elif self.departdate < datetime.date.today():
-                messagebox.showerror("Error", "This date is in the past")
+            #elif self.departdate < datetime.date.today():
+             #   messagebox.showerror("Error", "This date is in the past")
             elif self.departdate > datetime.datetime.strptime("05/31/2016", "%m/%d/%Y").date():
                 messagebox.showerror("Error", "Too far in the future. No routes available")
             else:
@@ -438,7 +425,10 @@ class gtTrains:
             routeIndex = int(vIndex[0])
             classIndex = int(vIndex[2]) + 2
             tempHolder = self.selectDepartList[routeIndex]
-            tempHolder[1] = self.departdate.strftime("%b %d") +" "+ tempHolder[1].decode("utf-8")
+            q = self.departdate.strftime("%b %d")
+            if type(tempHolder[1]) != str:
+                tempHolder[1] = tempHolder[1].decode("utf-8")
+            tempHolder[1] = self.departdate.strftime("%b %d") +" "+ tempHolder[1]
             b = tempHolder[classIndex]
             self.a = copy.deepcopy(tempHolder[:2])
             self.a.append(self.departVar.get())
@@ -498,8 +488,8 @@ class gtTrains:
             baggageCost = []
             for res in self.resList:
                 ticPrice.append(int(res[5]))
-                if int(res[7]) > 2:
-                    baggageCost.append((int(res[7]) - 2)*30)
+                if int(res[7]) - 2 > 0:
+                    baggageCost.append(30*(int(res[7])-2))
             totalCost = sum(ticPrice) + sum(baggageCost)
             if student == 1:
                 totalCost = totalCost*0.8
@@ -529,11 +519,14 @@ class gtTrains:
             cat.grid(row=6,column=0)
             back = Button(self.makeResWin, text="Back", command=self.backPassInfo)
             back.grid(row=7, column=0, columnspan=70, pady=20)
-            submit = Button(self.makeResWin, text="Submit", command=self.submitRes)
-            submit.grid(row=7, column=80, columnspan=100, pady=20)
-            self.dateList = []
-            for res in self.resList:
-                self.dateList.append(self.departdate)
+            sql = "SELECT Right(CardNumber, 4) FROM PaymentInfo WHERE Username = %s"
+            cursor.execute(sql, self.user)
+            cardList = []
+            for record in cursor:
+                cardList.append(record[0])
+            if cardList!=[]:
+                submit = Button(self.makeResWin, text="Submit", command=self.submitRes)
+                submit.grid(row=7, column=80, columnspan=100, pady=20)
 
     def addTrain(self):
         self.makeResWin.withdraw()
@@ -585,22 +578,20 @@ class gtTrains:
         expEntry.grid(row=4, column=1, sticky=W)
         addSub = Button(aFrame, text="Submit", command=self.addCard)
         addSub.grid(row=5, column=0, columnspan=2)
-        dc = Label(aFrame, text="Delete Card", font="Arial 14", width=30)
-        dc.grid(row=0, column=3, columnspan=2)
-        cn=Label(aFrame, text="Card Number")
-        cn.grid(row=1, column=3)
         sql = "SELECT Right(CardNumber, 4) FROM PaymentInfo WHERE Username = %s"
         cursor.execute(sql, self.user)
         cardList = []
         for record in cursor:
             cardList.append(record[0])
         self.payWith = StringVar(aFrame)
-        try:
+        if cardList!=[]:
+            dc = Label(aFrame, text="Delete Card", font="Arial 14", width=30)
+            dc.grid(row=0, column=3, columnspan=2)
+            cn=Label(aFrame, text="Card Number")
+            cn.grid(row=1, column=3)
             self.payWith.set(cardList[0])
             ucOM = OptionMenu(aFrame, self.payWith, *cardList)
             ucOM.grid(row=1, column=4)
-        except:
-            pass
             delSub = Button(aFrame, text="Submit", command=self.deleteCard)
             delSub.grid(row=5, column=3, columnspan=2)
         
@@ -619,11 +610,26 @@ class gtTrains:
                     messagebox.showerror("Error", "Check Card Number!")
                     count += 1
         if len(cardNo) != 16:
-            messagebox.showerror("Error", "Check Card Number!")
+            messagebox.showerror("Error", "Card number must be 16 digits")
             count += 1
         if len(cvv) != 3:
-            messagebox.showerror("Error", "Check CVV!")
+            messagebox.showerror("Error", "CVV must be 3 digits long")
             count += 1
+        for c in cvv:
+            if c not in "1234567890":
+                messagebox.showerror("Error", "CVV must be digits only")
+                count+=1
+                break
+        currentdate = datetime.date.today()
+        try:
+            edate = datetime.datetime.strptime(exp,"%m/%y")
+            edate = edate.date()
+            if currentdate >= edate:
+                messagebox.showerror("Error", "This card has already expired.")
+                count+=1
+        except:
+            messagebox.showerror("Error", "Please enter a date in the mm/yy format")
+            count+=1
         if count == 0:
             cursor = self.connect().cursor()
             sql = "INSERT INTO PaymentInfo VALUES (%s, %s, %s, %s, %s)"
@@ -656,28 +662,27 @@ class gtTrains:
         sql = "SELECT COUNT(*) FROM Reservations"
         cursor.execute(sql)
         count = cursor.fetchall()
-        resID = count[0][0] 
+        resID = count[0][0]
         sql = "SELECT CardNumber FROM PaymentInfo WHERE Right(CardNumber, 4) = %s AND Username = %s"
         cursor.execute(sql, (cardNo, self.user))
         raw = cursor.fetchall()
         fullcardNo = raw[0][0]
         sql = "INSERT INTO Reservations (ReservationID, Username, CardNumber, Status, TotalCost) VALUES (%s, %s, %s, %s, %s)"
         cursor.execute(sql, (resID, self.user, fullcardNo, '1', totalCost))
-        for x in range(len(self.resList)):
+        date = self.departdate
+        for res in self.resList:
             sql = "INSERT INTO ReservationDetails (ReservationID, TrainNumber, PassengerName, Baggage, Class, DepartsFrom, ArrivesAt, DepartureDate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-            split = self.resList[x][2].split("(")
+            split = res[2].split("(")
             departs = split[0]
-            split2 = self.resList[x][3].split("(")
+            split2 = res[3].split("(")
             arrives = split2[0]
-            if self.resList[x][4] == "1st Class":
+            if res[4] == "1st Class":
                 classs = "First Class"
             else:
                 classs = "Second Class"
-            date = self.dateList[x]
-            cursor.execute(sql, (resID, self.resList[x][0], self.resList[x][6], self.resList[x][7], classs, departs, arrives, date))
+            cursor.execute(sql, (resID, res[0], res[6], res[7], classs, departs, arrives, date))
         cursor.close()
         self.connect().commit()
-        self.makeResWin.withdraw()
         self.startRes = True
         self.confirmWin = Toplevel()
         self.confirmWin.title("Confirmation")
@@ -693,6 +698,7 @@ class gtTrains:
         d.grid(row=2, column=0, columnspan=2)
         b = Button(self.confirmWin, text="Back to Choose Functionality", command=self.backHome)
         b.grid(row=3, column=0, columnspan=2)
+        self.makeResWin.withdraw()
         
     def backHome(self):        
         self.confirmWin.withdraw()
@@ -721,6 +727,7 @@ class gtTrains:
         
     def searchRes(self):
         resnum = self.resID.get()
+        yes = True
         self.resnum = resnum
         cursor = self.connect().cursor()
         sql = "SELECT * FROM ReservationDetails WHERE ReservationID = %s"
@@ -731,62 +738,70 @@ class gtTrains:
             self.sqlList.append(x[1:])
         if count == 0:
             messagebox.showerror("Error", "No such reservation exists")
+            yes = False
+        sql = "SELECT * FROM Reservations WHERE Username = %s AND ReservationID=%s"
+        check = cursor.execute(sql,(self.user, resnum))
+        if check == 0:
+            messagebox.showerror("Error", "This reservation does not belong to you.")
+            yes = False
         sql = "SELECT Status FROM Reservations WHERE ReservationID = %s"
         cursor.execute(sql, resnum)
         raw = cursor.fetchall()
         cancelled = raw[0][0]
         if cancelled == '0':
             messagebox.showerror("Error", "You cannot update a cancelled reservation")
+            yes = False
         self.resInfo = []
-        for entry in self.sqlList:
-            sql = "SELECT TrainRoutes.TrainNumber, CONCAT(DepartureStop.DepartureTime,' - ', ArrivalStop.ArrivalTime, '\n', TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime)), DepartureStop.DepartureTime, ArrivalStop.ArrivalTime, TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) as Duration, TrainRoutes.FirstClassPrice, TrainRoutes.SecondClassPrice FROM TrainRoutes INNER JOIN Stops as ArrivalStop ON TrainRoutes.TrainNumber = ArrivalStop.TrainNumber INNER JOIN Stops as DepartureStop ON TrainRoutes.TrainNumber = DepartureStop.TrainNumber WHERE DepartureStop.StationName = %s AND ArrivalStop.StationName = %s AND TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) > '00:00:00'"
-            cursor.execute(sql, (entry[5], entry[6]))
-            raw = cursor.fetchall()
-            for x in range(len(raw)):
-                if raw[x][0] == entry[0]:
-                    self.resInfo.append(raw[x])
-        self.masterList = []
-        self.durationList = []
-        for x in range(len(self.resInfo)):
-            oneRes = []
-            oneRes.append(self.sqlList[x][0])
-            date = self.sqlList[x][4]
-            fixedDate = date.strftime("%b %d")
-            oneRes.append(fixedDate + ' ' + self.resInfo[x][1].decode("utf-8"))
-            self.durationList.append(self.resInfo[x][1].decode("utf-8"))
-            oneRes.append(self.sqlList[x][5])
-            oneRes.append(self.sqlList[x][6])
-            oneRes.append(self.sqlList[x][3])
-            if self.sqlList[x][3] == "First Class":
-                price = self.resInfo[x][5]
-            else:
-                price = self.resInfo[x][6]
-            oneRes.append(price)
-            oneRes.append(self.sqlList[x][2])
-            oneRes.append(self.sqlList[x][1])
-            self.masterList.append(oneRes)
-        self.v2 = IntVar()
-        self.updateResWin.withdraw()
-        self.selectResWin = Toplevel()
-        self.selectResWin.title("Update Reservation")
-        title = Label(self.selectResWin, text="Update Reservation", font="Arial 20")
-        title.grid(row=0,column=0, columnspan=100)
-        table = Frame(self.selectResWin)
-        table.grid(row=1, column=0, columnspan=100, pady=20, padx=20)
-        hList = ["Select", "Train\n(Train Number)", "Time\n(Duration)", "Departs From", "Arrives At", "Class", "Price", "# of Baggage", "Passenger Name"]
-        for i in range(len(hList)):
-            header = Label(table, text = hList[i])
-            header.grid(row = 0, column = i)
-        for i in range(len(self.masterList)):
-            r = Radiobutton(table, variable=self.v2, value=i)
-            r.grid(row=i+1, column=0)
-            for j in range(len(self.masterList[0])):
-                l = Label(table, text=self.masterList[i][j])
-                l.grid(row = i + 1, column = j + 1)                    
-        back = Button(self.selectResWin, text= "Back", command=self.searchToSelectRes)
-        back.grid(row=2, column=5)
-        nxt = Button(self.selectResWin, text= "Next", command=self.selectToUpdateRes)
-        nxt.grid(row=2, column=15)
+        if yes==True:
+            for entry in self.sqlList:
+                sql = "SELECT TrainRoutes.TrainNumber, CONCAT(DepartureStop.DepartureTime,' - ', ArrivalStop.ArrivalTime, '\n', TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime)), DepartureStop.DepartureTime, ArrivalStop.ArrivalTime, TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) as Duration, TrainRoutes.FirstClassPrice, TrainRoutes.SecondClassPrice FROM TrainRoutes INNER JOIN Stops as ArrivalStop ON TrainRoutes.TrainNumber = ArrivalStop.TrainNumber INNER JOIN Stops as DepartureStop ON TrainRoutes.TrainNumber = DepartureStop.TrainNumber WHERE DepartureStop.StationName = %s AND ArrivalStop.StationName = %s AND TIMEDIFF(ArrivalStop.ArrivalTime, DepartureStop.DepartureTime) > '00:00:00'"
+                cursor.execute(sql, (entry[5], entry[6]))
+                raw = cursor.fetchall()
+                for x in range(len(raw)):
+                    if raw[x][0] == entry[0]:
+                        self.resInfo.append(raw[x])
+            self.masterList = []
+            self.durationList = []
+            for x in range(len(self.resInfo)):
+                oneRes = []
+                oneRes.append(self.sqlList[x][0])
+                date = self.sqlList[x][4]
+                fixedDate = date.strftime("%b %d")
+                oneRes.append(fixedDate + ' ' + self.resInfo[x][1].decode("utf-8"))
+                self.durationList.append(self.resInfo[x][1].decode("utf-8"))
+                oneRes.append(self.sqlList[x][5])
+                oneRes.append(self.sqlList[x][6])
+                oneRes.append(self.sqlList[x][3])
+                if self.sqlList[x][3] == "First Class":
+                    price = self.resInfo[x][5]
+                else:
+                    price = self.resInfo[x][6]
+                oneRes.append(price)
+                oneRes.append(self.sqlList[x][2])
+                oneRes.append(self.sqlList[x][1])
+                self.masterList.append(oneRes)
+            self.v2 = IntVar()
+            self.updateResWin.withdraw()
+            self.selectResWin = Toplevel()
+            self.selectResWin.title("Update Reservation")
+            title = Label(self.selectResWin, text="Update Reservation", font="Arial 20")
+            title.grid(row=0,column=0, columnspan=100)
+            table = Frame(self.selectResWin)
+            table.grid(row=1, column=0, columnspan=100, pady=20, padx=20)
+            hList = ["Select", "Train\n(Train Number)", "Time\n(Duration)", "Departs From", "Arrives At", "Class", "Price", "# of Baggage", "Passenger Name"]
+            for i in range(len(hList)):
+                header = Label(table, text = hList[i])
+                header.grid(row = 0, column = i)
+            for i in range(len(self.masterList)):
+                r = Radiobutton(table, variable=self.v2, value=i)
+                r.grid(row=i+1, column=0)
+                for j in range(len(self.masterList[0])):
+                    l = Label(table, text=self.masterList[i][j])
+                    l.grid(row = i + 1, column = j + 1)                    
+            back = Button(self.selectResWin, text= "Back", command=self.searchToSelectRes)
+            back.grid(row=2, column=5)
+            nxt = Button(self.selectResWin, text= "Next", command=self.selectToUpdateRes)
+            nxt.grid(row=2, column=15)
         
     def searchToSelectRes(self):
         self.selectResWin.withdraw()
@@ -794,46 +809,25 @@ class gtTrains:
 
     def selectToUpdateRes(self):
         self.selectResWin.withdraw()
-        self.editResWin = Toplevel()
-        self.editResWin.title("Update Reservation")
         selection = self.v2.get()
         self.onlyRes = self.masterList[selection]
         self.onlyDuration = self.durationList[selection]
         olddate = self.sqlList[selection][4]
-        self.newdate = StringVar()
-        self.newdate.set(olddate)
-        current = Label(self.editResWin, text = "Current Train Ticket")
-        current.grid(row = 1, column = 0)
-        table = Frame(self.editResWin)
-        table.grid(row=2, column=0, columnspan=100, pady=20, padx=20)
-        hList = ["Train\n(Train Number)", "Time\n(Duration)", "Departs From", "Arrives At", "Class", "Price", "# of Baggage", "Passenger Name"]
-        for i in range(len(hList)):
-            header = Label(table, text = hList[i])
-            header.grid(row = 0, column = i)
-        for j in range(len(self.onlyRes)):
-            l = Label(table, text=self.onlyRes[j])
-            l.grid(row = 1, column = j)
-        new = Label(self.editResWin, text="New Departure Date")
-        new.grid(row=3, column=0)
-        ndate = Entry(self.editResWin, textvariable=self.newdate)
-        ndate.grid(row=3, column=1)
-        avail = Button(self.editResWin, text="Search Availability", command = self.checkAvail)
-        avail.grid(row=3, column=2)
-
-    def checkAvail(self):
-        date = self.newdate.get()
-        self.date_object = datetime.datetime.strptime(date, '%Y-%m-%d')
-        today = datetime.date.today()
-        nextday = today + datetime.timedelta(days=1)
-        if today == self.date_object or  nextday == self.date_object:
-            messagebox.showerror("Error", "You cannot change a reservation the day before the trip")
+        self.origDate = olddate
+        if self.origDate <= datetime.date.today():
+            messagebox.showerror("Error", "Sorry, it is too late to update this ticket.")
+            self.searchRes()
         else:
-            self.onlyRes[1] = self.date_object.strftime("%b %d") + ' ' + self.onlyDuration
-            up = Label(self.editResWin , text="Updated Train Ticket")
-            self.updatedTrainNo = self.onlyRes[0]
-            up.grid(row=4,column=0)
+            self.editResWin = Toplevel()
+            self.editResWin.title("Update Reservation")
+            title = Label(self.editResWin, text="Update Reservation", font="Arial 20")
+            title.grid(row=0, column=0, columnspan=10)
+            self.newdate = StringVar()
+            self.newdate.set(olddate)
+            current = Label(self.editResWin, text = "Current Train Ticket")
+            current.grid(row = 1, column = 0)
             table = Frame(self.editResWin)
-            table.grid(row=5, column=0, columnspan=100, pady=20, padx=20)
+            table.grid(row=2, column=0, columnspan=100, pady=20, padx=20)
             hList = ["Train\n(Train Number)", "Time\n(Duration)", "Departs From", "Arrives At", "Class", "Price", "# of Baggage", "Passenger Name"]
             for i in range(len(hList)):
                 header = Label(table, text = hList[i])
@@ -841,50 +835,89 @@ class gtTrains:
             for j in range(len(self.onlyRes)):
                 l = Label(table, text=self.onlyRes[j])
                 l.grid(row = 1, column = j)
-            change = Label(self.editResWin , text="Change Fee")
-            change.grid(row=6, column=0)
-            changeFee = StringVar()
-            changeFee.set('50')
-            changeE = Entry(self.editResWin , textvariable = changeFee, state="readonly")
-            changeE.grid(row=6, column=1)
-            cost = Label(self.editResWin , text="Updated Total Cost")
-            cost.grid(row= 7, column=0)
-            cursor = self.connect().cursor()
-            sql = "SELECT TotalCost FROM Reservations WHERE ReservationID = %s"
-            cursor.execute(sql, self.resnum)
-            raw = cursor.fetchall()
-            newcost = raw[0][0] + 50
-            updatedcost = StringVar()
-            updatedcost.set(newcost)
-            costE = Entry(self.editResWin , textvariable = updatedcost, state="readonly")
-            costE.grid(row=7, column=1)
-            back = Button(self.editResWin, text="Back", command = self.back2select)
-            back.grid(row=8, column=2)
-            submit = Button(self.editResWin, text = "Submit", command = self.submitChanges)
-            submit.grid(row = 8, column = 4)
-            
+            new = Label(self.editResWin, text="New Departure Date")
+            new.grid(row=3, column=0)
+            ndate = Entry(self.editResWin, textvariable=self.newdate)
+            ndate.grid(row=3, column=1)
+            avail = Button(self.editResWin, text="Search Availability", command = self.checkAvail)
+            avail.grid(row=3, column=2)
+
+    def checkAvail(self):
+        try:
+            date = self.newdate.get()
+            self.date_object = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+            today = datetime.date.today()
+            if self.date_object-today <= datetime.timedelta(1):
+                messagebox.showerror("Error", "You cannot change a reservation the day before the trip or a reservation that has already passed")
+            else:
+                self.onlyRes[1] = self.date_object.strftime("%b %d") + ' ' + self.onlyDuration
+                up = Label(self.editResWin , text="Updated Train Ticket")
+                self.updatedTrainNo = self.onlyRes[0]
+                up.grid(row=4,column=0)
+                table = Frame(self.editResWin)
+                table.grid(row=5, column=0, columnspan=100, pady=20, padx=20)
+                hList = ["Train\n(Train Number)", "Time\n(Duration)", "Departs From", "Arrives At", "Class", "Price", "# of Baggage", "Passenger Name"]
+                for i in range(len(hList)):
+                    header = Label(table, text = hList[i])
+                    header.grid(row = 0, column = i)
+                for j in range(len(self.onlyRes)):
+                    l = Label(table, text=self.onlyRes[j])
+                    l.grid(row = 1, column = j)
+                change = Label(self.editResWin , text="Change Fee")
+                change.grid(row=6, column=0)
+                sql="SELECT ChangeFee FROM SystemInfo"
+                cursor=self.connect().cursor()
+                cursor.execute(sql)
+                for record in cursor:
+                    changefee = record[0]
+                cf=StringVar()
+                cf.set(changefee)
+                changeE = Entry(self.editResWin , text = cf, state="readonly")
+                changeE.grid(row=6, column=1)
+                cost = Label(self.editResWin , text="Updated Total Cost")
+                cost.grid(row= 7, column=0)
+                cursor = self.connect().cursor()
+                sql = "SELECT TotalCost FROM Reservations WHERE ReservationID = %s"
+                cursor.execute(sql, self.resnum)
+                raw = cursor.fetchall()
+                newcost = raw[0][0] + int(cf.get())
+                updatedcost = StringVar()
+                updatedcost.set(newcost)
+                costE = Entry(self.editResWin , textvariable = updatedcost, state="readonly")
+                costE.grid(row=7, column=1)
+                back = Button(self.editResWin, text="Back", command = self.back2select)
+                back.grid(row=8, column=2)
+                submit = Button(self.editResWin, text = "Submit", command = self.submitChanges)
+                submit.grid(row = 8, column = 4)
+        except:
+            messagebox.showerror("Error", "That is not a valid date. Please type it in the YYYY/MM/DD format.")
+
     def submitChanges(self):
         cursor = self.connect().cursor()
-        sql = "UPDATE ReservationDetails SET DepartureDate = %s WHERE ReservationID = %s AND TrainNumber = %"
+        sql = "UPDATE ReservationDetails SET DepartureDate = %s WHERE ReservationID = %s AND TrainNumber = %s"
         cursor.execute(sql, (self.date_object, self.resnum, self.updatedTrainNo)) 
         sql = "UPDATE Reservations SET TotalCost = TotalCost + 50 WHERE ReservationID = %s"
         cursor.execute(sql, self.resnum)
         cursor.close()
         self.connect().commit()
+        self.editResWin.withdraw()
+        self.customerHome()
         
     def back2select(self):
         self.editResWin.withdraw()
         self.selectResWin.deiconify()
-    
+        
     def cancelReservation(self):
         self.custHomeWin.withdraw()
         self.cancelResIDWin = Toplevel()
         self.cancelResIDWin.title("Cancel Reservation")
         title = Label(self.cancelResIDWin, text = "Cancel Reservation", font="Arial 20")
         title.grid(row=0, column=0, columnspan = 3)
-        resID = Label(self.cancelResIDWin, text = "ReservationID")
-        resID.grid(row=1, column=0)
-        resEntry = Label(self.cancelResIDWin)
+        resl = Label(self.cancelResIDWin, text = "ReservationID")
+        resl.grid(row=1, column=0)
+        self.resID = StringVar()
+        self.resID.set("")
+        resEntry = Entry(self.cancelResIDWin, textvariable=self.resID)
         resEntry.grid(row=1, column=1)
         search = Button(self.cancelResIDWin, text = "Search", command=self.cancelRes)
         search.grid(row=1, column=2)
@@ -907,11 +940,8 @@ class gtTrains:
         ### cannot cancel a cancelled reservation
         # commit changes
         # refund can't be negatiive
-        # 
-        #
-        #
-        #
-        #
+        #  CANCELLATION DATE
+        # self.resID.get()
         #
         #self.cancelResIDWin.withdraw()
         self.cancelResWin = Toplevel()
@@ -983,8 +1013,9 @@ class gtTrains:
         
     def viewReviews(self):
         cursor=self.connect().cursor()
+        print(self.trainNo)
         sql= "SELECT Rating, Comment FROM Reviews WHERE TrainNumber = %s"
-        check=cursor.execute(sql,self.trainNo)
+        check=cursor.execute(sql,self.trainNo.get())
         if check==0:
             messagebox.showerror("Error","Train Number Invalid")
         else:
@@ -1074,7 +1105,6 @@ class gtTrains:
         emailEntry.grid(row = 1, column = 1, padx = 10)
         noteLabel = Label(self.addSchoolWin, text = "Your school email address ends with .edu")
         noteLabel.grid(row = 2, column = 0, columnspan = 2, pady = 10)
-        ## buttons
         buttonframe = Frame(self.addSchoolWin)
         buttonframe.grid(row = 3, column = 0, columnspan = 2)
         back = Button(buttonframe, text = "Back",command=self.schoolInfoBack)
@@ -1103,7 +1133,6 @@ class gtTrains:
             self.connect().commit()
             
     def managerHome(self):
-        #self.loginWin.withdraw()
         self.mgrHomeWin=Toplevel()
         self.mgrHomeWin.title("Choose Functionality")
         title = Label(self.mgrHomeWin, text = "Choose Functionality", font = "Arial 20", pady = 20, padx = 30)
@@ -1134,17 +1163,22 @@ class gtTrains:
             h.grid(row=0, column=i)
         back = Button(self.revenueWin, text="Back", command=self.revToHome)
         back.grid(row=2, column=0)
-##        sql=""
-##        self.connect()
-##        cursor=self.connect().cursor()
-##        cursor.execute(sql)
-##        tableList=[]
-##        for record in cursor:
-##            tableList.append(record)
-##        cursor.close()
+        sql= "SELECT MONTH(NOW())-2, CONCAT('$',SUM(Reservations.TotalCost))FROM Reservations WHERE Reservations.ReservationID in (SELECT ReservationID FROM ReservationDetails WHERE MONTH(DepartureDate) = MONTH(NOW())-2)UNION SELECT MONTH(NOW())-1, CONCAT('$',SUM(Reservations.TotalCost)) FROM Reservations WHERE Reservations.ReservationID in (SELECT ReservationID FROM ReservationDetails WHERE MONTH(DepartureDate) = MONTH(NOW())-1) UNION SELECT MONTH(NOW()), CONCAT('$',SUM(Reservations.TotalCost)) FROM Reservations WHERE Reservations.ReservationID in (SELECT ReservationID FROM ReservationDetails WHERE MONTH(DepartureDate) = MONTH(NOW()))"
+        cursor=self.connect().cursor()
+        cursor.execute(sql)
+        tableList=[]
+        for record in cursor:
+            tableList.append(record)
+        for i in range(len(tableList)):
+            for j in range(2):
+                l = Label(table, text=tableList[i][j])
+                l.grid(row=i+1, column=j)
+        cursor.close()
+        
     def revToHome(self):
         self.revenueWin.withdraw()
         self.mgrHomeWin.deiconify()
+        
     def popRoute(self):
         self.mgrHomeWin.withdraw()
         self.popularWin=Toplevel()
@@ -1157,20 +1191,37 @@ class gtTrains:
         for i in range(len(hList)):
             h = Label(table, text=hList[i])
             h.grid(row=0, column=i)
+        m1=[]
+        m2=[]
+        m3=[]
+        cursor = self.connect().cursor()
+        sql="SELECT MONTH(NOW())-2, TrainNumber, COUNT( TrainNumber ) FROM ReservationDetails INNER JOIN Reservations ON ReservationDetails.ReservationID = Reservations.ReservationID WHERE MONTH( DepartureDate ) = Month(NOW())-2 GROUP BY TrainNumber ORDER BY Count(TrainNumber) DESC LIMIT 3"
+        cursor.execute(sql)
+        for record in cursor:
+            m1.append([record[0], record[1], record[2]])
+        sql="SELECT MONTH(NOW())-1, TrainNumber, COUNT( TrainNumber ) FROM ReservationDetails INNER JOIN Reservations ON ReservationDetails.ReservationID = Reservations.ReservationID WHERE MONTH( DepartureDate ) = Month(NOW())-1 GROUP BY TrainNumber ORDER BY Count(TrainNumber) DESC LIMIT 3"
+        cursor.execute(sql)
+        for record in cursor:
+            m2.append([record[0], record[1], record[2]])
+        sql="SELECT MONTH(NOW()), TrainNumber, COUNT( TrainNumber ) FROM ReservationDetails INNER JOIN Reservations ON ReservationDetails.ReservationID = Reservations.ReservationID WHERE MONTH( DepartureDate ) = Month(NOW()) GROUP BY TrainNumber ORDER BY Count(TrainNumber) DESC LIMIT 3"
+        cursor.execute(sql)
+        for record in cursor:
+            m3.append([record[0], record[1], record[2]])
+        for i in range(3):
+            for j in range(3):
+                a = Label(table, text=m1[i][j])
+                a.grid(row=i+1, column=j)
+                b = Label(table, text=m2[i][j])
+                b.grid(row=i+4, column=j)
+                c = Label(table, text=m3[i][j])
+                c.grid(row=i+7, column=j)
         back = Button(self.popularWin, text="Back", command=self.popToHome)
         back.grid(row=2, column=0)
+        cursor.close()
+        
     def popToHome(self):
         self.popularWin.withdraw()
         self.mgrHomeWin.deiconify()
-        
-##        sql=""
-##        cursor=self.connect().cursor()
-##        cursor.execute(sql)
-##        tableList=[]
-##        for record in cursor:
-##            tableList.append(record)
-##        cursor.close()
-##
         
     def mgrLogOut(self):
         self.mgrHomeWin.withdraw()
@@ -1181,6 +1232,7 @@ class gtTrains:
         self.custHomeWin.withdraw()
         self.loginWin.deiconify()
         self.connect().close()
+        
 rootWin = Tk()
 app = gtTrains(rootWin)
 rootWin.mainloop()
